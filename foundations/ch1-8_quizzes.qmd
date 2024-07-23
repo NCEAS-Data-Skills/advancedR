@@ -4,6 +4,8 @@ format: html
 editor: visual
 ---
 
+Please make your own copy of the quiz template to fill out rather than working on the template and pushing your own changes to this version. 
+
 ## Ch 2: Names and Values
 
 1.  Given the following data frame, how do I create a new column called "3"
