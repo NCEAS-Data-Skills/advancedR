@@ -1,0 +1,219 @@
+---
+title: "Foundation Chapter Quizzes"
+format: html
+editor: visual
+---
+
+Please make your own copy of the quiz template to fill out rather than working on the template and pushing your own changes to this version.
+
+## Ch 2: Names and Values
+
+1.  Given the following data frame, how do I create a new column called "3" that contains the sum of `1` and `2`? You may only use `$`, not `[[`. What makes `1`, `2`, and `3` challenging as variable names?
+
+    ```{r}
+    df <- data.frame(runif(3), runif(3))
+    names(df) <- c(1, 2)
+
+    df$`3` <- df$`1` + df$`2`
+    ```
+
+2.  In the following code, how much memory does `y` occupy?
+
+    ```{r}
+    x <- runif(1e6)
+    y <- list(x, x, x)
+    ### none? since it is just three pointers to x until any mods are made?
+    object.size(x)
+    object.size(y)
+    ### nope, guess not!
+    pryr::object_size(x); pryr::object_size(y)
+    ### ok that's confusing
+    pryr::object_size(x, y)
+    ### weird... but ok
+    ```
+
+3.  On which line does `a` get copied in the following example?
+
+    ```{r}
+    a <- c(1, 5, 3, 2)
+    b <- a
+    b[[1]] <- 10
+    ### first thought would be line 3 when the mod is made, then a is copied and then modified
+    ```
+
+## Ch 3: Vectors
+
+1.  What are the four common types of atomic vectors? What are the two rare types?
+
+    1.  character, integer, double, logical; ???, ???
+
+2.  What are attributes? How do you get them and set them?
+
+    1.  tags you can append to an object, `attr(x, attribute)` and `attr(x, attribute) <- value`. But I've never really used them - what are some effective use cases?
+
+3.  How is a list different from an atomic vector? How is a matrix different from a data frame?
+
+    1.  List can have different classes for each element; all elements of an atomic vector must be the same class. Dataframe columns can all be different classes (though all values in a column are the same class), but matrix, every element is the same class.
+
+4.  Can you have a list that is a matrix? Can a data frame have a column that is a matrix?
+
+    1.  List that is a matrix: maybe a list of equal-length vectors, all of the same class, can be coerced into a matrix? I don't think a data frame can have a column that is a matrix, but you could have a column whose cells contain lists (including other data frames) (this may be tibble territory though).
+
+5.  How do tibbles behave differently from data frames?
+
+    1.  Certain methods act differently; potentially as noted above allowing for columns whose cells contain complex data types in list form?
+
+## Ch. 4: Subsetting
+
+1.  What is the result of subsetting a vector with positive integers, negative integers, a logical vector, or a character vector?
+
+    1.  pos integers: keep only elements matching those integers.
+
+    2.  neg integers: drop those elements matching those negative integers
+
+    3.  logical vector: keep all elements in the vector where the logical is TRUE
+
+    4.  character vector: has to be a named vector, keep those elements that match those names
+
+2.  What's the difference between `[`, `[[`, and `$` when applied to a list?
+
+    1.  `$<name>` will return the list element(s) whose name matches \<name\>
+
+    2.  `[[<number or name>]]` will return the list element(s) matching those numbers or names - but only a single number or name?
+
+    3.  `[<number or name>]` returns the matching element(s) but keeps it as a list
+
+3.  When should you use `drop = FALSE`?
+
+    1.  depends on the function? this is subsetting? unfamiliar with this in context of subsetting
+
+4.  If `x` is a matrix, what does `x[] <- 0` do? How is it different from `x <- 0`?
+
+    1.  `x[] <- 0` will set all elements of the matrix to zero; `x <- 0` will override the matrix and just create a single-element atomic vector with value 0
+
+5.  How can you use a named vector to relabel categorical variables?
+
+## Ch. 5: Control flow
+
+-   What is the difference between `if` and `ifelse()`?
+
+    -   `if()` is followed by a single-value test (in parentheses) and then some code; if the test evaluates to TRUE, then the code is executed, otherwise not. `ifelse()` is a function that applies a test to a vector (arg 1), and for each element that is true, returns the matching element of a second vector (given as second argument), otherwise returns the matching element of a third vector (third argument). E.g.: `ifelse(x > 0, x, -x)` will test each element of x, and for positive values returns that element of x, otherwise negative (of a negative) element of x
+
+-   In the following code, what will the value of `y` be if `x` is `TRUE`? What if `x` is `FALSE`? What if `x` is `NA`?
+
+    ```{r, eval = FALSE}
+    y <- if (x) 3
+    ```
+
+    -   if x is TRUE, then y is 3; if x is FALSE, ??? if x is NA, y is NA?
+
+    -   NOPE: if x false: NULL; if x is NA: error! need a TRUE or FALSE value in the `if()` test!
+
+-   What does `switch("x", x = , y = 2, z = 3)` return?
+
+    -   NULL?
+
+    -   NOPE: returns 2, perhaps if x is unassigned it skips to the next argument?
+
+    -   verified: if changed to `...x = , y = , z = 3)` then it returns 3
+
+## Ch. 6: Functions
+
+1.  What are the three components of a function?
+
+    1.  arguments, executable code, and returned value?
+
+2.  What does the following code return?
+
+    ```{r, eval = FALSE}
+    x <- 10
+    f1 <- function(x) {
+      function() {
+        x + 10
+      }
+    }
+    f1(1)()
+    ```
+
+    1.  `f1(1)` returns 11, but `f1(1)()` returns an error because of those other parentheses, since it thinks it's looking for a function called 11?
+
+    2.  nope, haha, missed the internal `function()` - so `f1(x)` returns a `function` that adds 10 to `x`. So: `f1(x = 1)` sets x in the first layer of the environment to 1 (not 10); then the `function() {x+10}` has no argument, so must look up one level of environment for the value of `x`. In this case, `x` one level above is set to 1 (not 10), so `f1(1)()` returns 1 + 10 = 11.
+
+3.  How would you usually write this code?
+
+    ```{r, eval = FALSE}
+    `+`(1, `*`(2, 3))
+
+    1 + (2 * 3)
+    ```
+
+4.  How could you make this call easier to read?
+
+    ```{r, eval = FALSE}
+    mean(, TRUE, x = c(1:10, NA))
+
+    mean(c(1:10, NA), na.rm = TRUE)
+    ```
+
+5.  Does the following code throw an error when executed? Why or why not?
+
+    ```{r, eval = FALSE}
+    f2 <- function(a, b) {
+      a * 10
+    }
+    f2(10, stop("This is an error!"))
+    ```
+
+    1.  no error. The b argument is not used, so never executed. `f2(10, stop("This is an error!"))` would return 100.
+
+    2.  verified!
+
+6.  What is an infix function? How do you write it? What's a replacement function? How do you write it?
+
+    1.  hmm, infix might be as an argument to something like `lapply`? e.g.,
+
+        `lapply(1:10, FUN = function(x) {x^2})`
+
+    2.  or is this getting into the \~ syntax?
+
+7.  How do you ensure that cleanup action occurs regardless of how a function exits?
+
+    1.  umm, dunno - `gc()`?
+
+## Ch. 7: Environments
+
+1.  List at least three ways that an environment differs from a list.
+
+2.  What is the parent of the global environment? What is the only environment that doesn't have a parent?
+
+    1.  I think global has no parent?
+
+3.  What is the enclosing environment of a function? Why is it important?
+
+4.  How do you determine the environment from which a function was called?
+
+5.  How are `<-` and `<<-` different?
+
+    1.  `<-` assigns a value to an object within the current environment only. `<<-` assigns the value to an object in a higher environment, I think scanning all higher environments sequentially until it finds an object of that name, e.g., if you have something like:
+
+``` r
+y <- 10
+f1 <- function(x) { function() { function() { y <<- x + 10} } }
+f1(3)()()
+```
+
+2.  y becomes 13 because global y is overwritten with the two-envs-down equation `y <<- x + 10` (where x was assigned 3 earlier on with `f1(3)`)
+
+3.  `assign(x, y, envir)` is probably a more robust version of that!
+
+## Ch. 8: Conditions
+
+1.  What are the three most important types of condition?
+
+2.  What function do you use to ignore errors in block of code?
+
+    1.  `try()`? or `tryCatch`?
+
+3.  What's the main difference between `tryCatch()` and `withCallingHandlers()`?
+
+4.  Why might you want to create a custom error object?
