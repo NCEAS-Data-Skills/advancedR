@@ -1,0 +1,274 @@
+---
+title: "Foundation Chapter Quizzes"
+format: html
+editor: visual
+---
+
+## Ch 2: Names and Values
+
+1.  Given the following data frame, how do I create a new column called "3"
+    that contains the sum of `1` and `2`? You may only use `$`, not `[[`.
+    What makes `1`, `2`, and `3` challenging as variable names?
+
+```{r}
+    df <- data.frame(runif(3), runif(3))
+    names(df) <- c(1, 2)
+```
+    
+Answer:
+```{r}
+df$`3` <- df$`1` + df$`2`
+df
+
+```
+They are challenging because R doesn't allow numbers as the first character in 
+a variable or column name, so you have to use `` around the variable name to call it. 
+
+1.  In the following code, how much memory does `y` occupy?
+   
+    ```{r}
+    x <- runif(1e6)
+    y <- list(x, x, x)
+    
+    
+    ```
+
+didn't know how to check initially, need to use `lobstr::obj_size()`
+
+Answer:
+```{r}
+lobstr::obj_size(y)
+
+```
+
+
+
+1.  On which line does `a` get copied in the following example?
+
+    ```{r}
+    a <- c(1, 5, 3, 2)
+    b <- a
+    b[[1]] <- 10
+    ```
+
+didn't know initially, line 3? 
+use tracemem to find out when it is copied 
+
+```{r}
+a <- c(1, 5, 3, 2)
+cat(tracemem(a), "\n")
+
+b <- a
+b[[1]] <- 10
+
+```
+
+
+## Ch 3: Vectors
+
+1. What are the four common types of atomic vectors? What are the two 
+   rare types?
+   
+character, integer, numeric, logical/boolean
+
+1. What are attributes? How do you get them and set them?
+
+- attributes are special features of an object that tell R something about how to work
+with them?
+
+```{r}
+x <- c(1, 2, 3)
+
+# fetch attributes 
+attr(x, "dim") 
+
+attr(x, "dim") <- 1
+```
+
+
+1. How is a list different from an atomic vector? How is a matrix different
+   from a data frame?
+   
+a list can have different types of vectors in it, while an atomic vector has 
+to be all of the same type
+
+a matrix is similar because all items/elements must be of the same type, but in 
+a dataframe you can have columns of different types (even lists?)
+
+1. Can you have a list that is a matrix? Can a data frame have a column 
+   that is a matrix?
+   
+didn't know the answer....
+   
+1. How do tibbles behave differently from data frames?
+
+didn't really know either 
+
+## Ch. 4: Subsetting
+
+1.  What is the result of subsetting a vector with positive integers, 
+    negative integers, a logical vector, or a character vector?
+
+    
+```{r}
+x <- c(1:10)
+x[-1]
+x[c(TRUE, FALSE)]
+x["1"]
+
+```
+    
+
+1.  What's the difference between `[`, `[[`, and `$` when applied to a list?
+
+```{r}
+
+temp_list <- list(a = c(1, 2, 3), b = c("happy", "sad", "fun"), c = c(TRUE, FALSE, FALSE))
+
+temp_list[1]
+
+temp_list[[1]]
+
+temp_list$a
+
+```
+
+- one returns a list, the other two return the elements of a list 
+
+1.  When should you use `drop = FALSE`?
+
+didn't know...
+
+1.  If `x` is a matrix, what does `x[] <- 0` do? How is it different from
+    `x <- 0`?
+
+didn't know
+
+1.  How can you use a named vector to relabel categorical variables?
+
+```{r}
+c(x = 1, y = 2, z = 3)[c("y", "z", "x")]
+
+```
+
+
+## Ch. 5: Control flow
+
+*   What is the difference between `if` and `ifelse()`?
+
+`if` only does something if a condition is met, but `ifelse` does one thing if 
+a condition is met and another if it is not
+
+*   In the following code, what will the value of `y` be if `x` is `TRUE`?
+    What if `x` is `FALSE`? What if `x` is `NA`?
+  
+    ```{r, eval = FALSE}
+    y <- if (x) 3
+    ```
+
+3, NULL?, NA? - error actually
+
+```{r}
+x <- NA
+
+y <- if(x) 3
+
+```
+
+
+*   What does `switch("x", x = , y = 2, z = 3)` return?
+
+didn't know.. 
+
+```{r}
+switch("x", x = , y = 2, z = 3)
+```
+
+
+## Ch. 6: Functions
+
+1.  What are the three components of a function?
+
+arguments, body, environment?
+
+1.  What does the following code return?
+
+    ```{r, eval = FALSE}
+    x <- 10
+    f1 <- function(x) {
+      function() {
+        x + 10
+      }
+    }
+    f1(1)()
+    ```
+    
+1.  How would you usually write this code?
+
+    ```{r, eval = FALSE}
+    `+`(1, `*`(2, 3))
+    ```
+    
+    1 + (2 * 3)
+    
+1.  How could you make this call easier to read?
+
+    ```{r, eval = FALSE}
+    mean(, TRUE, x = c(1:10, NA))
+    ```
+
+reorder the arguments 
+
+
+1.  Does the following code throw an error when executed? Why or why not?
+
+    ```{r, eval = FALSE}
+    f2 <- function(a, b) {
+      a * 10
+    }
+    f2(10, stop("This is an error!"))
+    ```
+
+no, never calls the argument so it is not evaluated 
+
+
+1.  What is an infix function? How do you write it? What's a replacement 
+    function? How do you write it?
+
+somewhat vague on this - they go bewteen two arguments? but didn't know how to write
+without looking it up
+
+
+1.  How do you ensure that cleanup action occurs regardless of how a function 
+    exits?
+
+use onexit? but didn't know 
+
+
+## Ch. 7: Environments
+
+didn't really know despite having read this chapter
+
+1.  List at least three ways that an environment differs from a list.
+
+1.  What is the parent of the global environment? What is the only 
+    environment that doesn't have a parent?
+    
+1.  What is the enclosing environment of a function? Why is it 
+    important?
+
+1.  How do you determine the environment from which a function was called?
+
+1.  How are `<-` and `<<-` different?
+
+## Ch. 8: Conditions
+
+didn't really know... 
+
+1. What are the three most important types of condition?
+
+1. What function do you use to ignore errors in block of code?
+
+1. What's the main difference between `tryCatch()` and `withCallingHandlers()`?
+
+1. Why might you want to create a custom error object?
