@@ -1,0 +1,136 @@
+---
+title: "Foundation Chapter Quizzes"
+format: html
+editor: visual
+---
+
+Please make your own copy of the quiz template to fill out rather than working on the template and pushing your own changes to this version.
+
+## Ch 2: Names and Values
+
+1.  Given the following data frame, how do I create a new column called "3" that contains the sum of `1` and `2`? You may only use `$`, not `[[`. What makes `1`, `2`, and `3` challenging as variable names?
+
+    ```{r}
+    df <- data.frame(runif(3), runif(3))
+    names(df) <- c(1, 2)
+
+    df$`3` <- (df$`1`) + (df$`2`)
+    ```
+
+Can't use numbers unless they're in back-ticks because R doesn't allow numbers as the first character in a variable or column name.
+
+2.  In the following code, how much memory does `y` occupy?
+
+    ```{r}
+    x <- runif(1e6)
+    y <- list(x, x, x)
+    
+    lobstr::obj_size(y)
+    ```
+
+3.  On which line does `a` get copied in the following example?
+
+    ```{r}
+    a <- c(1, 5, 3, 2)
+    b <- a 
+    b[[1]] <- 10 # a copied when b is modified
+    ```
+
+## Ch 3: Vectors
+
+1.  What are the four common types of atomic vectors? What are the two rare types?
+
+2.  What are attributes? How do you get them and set them?
+
+3.  How is a list different from an atomic vector? How is a matrix different from a data frame?
+
+4.  Can you have a list that is a matrix? Can a data frame have a column that is a matrix?
+
+5.  How do tibbles behave differently from data frames?
+
+## Ch. 4: Subsetting
+
+1.  What is the result of subsetting a vector with positive integers, negative integers, a logical vector, or a character vector?
+
+2.  What's the difference between `[`, `[[`, and `$` when applied to a list?
+
+3.  When should you use `drop = FALSE`?
+
+4.  If `x` is a matrix, what does `x[] <- 0` do? How is it different from `x <- 0`?
+
+5.  How can you use a named vector to relabel categorical variables?
+
+## Ch. 5: Control flow
+
+-   What is the difference between `if` and `ifelse()`?
+
+-   In the following code, what will the value of `y` be if `x` is `TRUE`? What if `x` is `FALSE`? What if `x` is `NA`?
+
+    ```{r, eval = FALSE}
+    y <- if (x) 3
+    ```
+
+-   What does `switch("x", x = , y = 2, z = 3)` return?
+
+## Ch. 6: Functions
+
+1.  What are the three components of a function?
+
+2.  What does the following code return?
+
+    ```{r, eval = FALSE}
+    x <- 10
+    f1 <- function(x) {
+      function() {
+        x + 10
+      }
+    }
+    f1(1)()
+    ```
+
+3.  How would you usually write this code?
+
+    ```{r, eval = FALSE}
+    `+`(1, `*`(2, 3))
+    ```
+
+4.  How could you make this call easier to read?
+
+    ```{r, eval = FALSE}
+    mean(, TRUE, x = c(1:10, NA))
+    ```
+
+5.  Does the following code throw an error when executed? Why or why not?
+
+    ```{r, eval = FALSE}
+    f2 <- function(a, b) {
+      a * 10
+    }
+    f2(10, stop("This is an error!"))
+    ```
+
+6.  What is an infix function? How do you write it? What's a replacement function? How do you write it?
+
+7.  How do you ensure that cleanup action occurs regardless of how a function exits?
+
+## Ch. 7: Environments
+
+1.  List at least three ways that an environment differs from a list.
+
+2.  What is the parent of the global environment? What is the only environment that doesn't have a parent?
+
+3.  What is the enclosing environment of a function? Why is it important?
+
+4.  How do you determine the environment from which a function was called?
+
+5.  How are `<-` and `<<-` different?
+
+## Ch. 8: Conditions
+
+1.  What are the three most important types of condition?
+
+2.  What function do you use to ignore errors in block of code?
+
+3.  What's the main difference between `tryCatch()` and `withCallingHandlers()`?
+
+4.  Why might you want to create a custom error object?
