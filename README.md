@@ -7,4 +7,10 @@ Solutions: https://advanced-r-solutions.rbind.io/
 
 ## Meeting Schedule
 
-2024-07-25 12:30 pm - first meeting 
+Meetings are weekly on Thursdays at 12:30pm, online and in person in the Manzanita Room (when available). 
+
+| Date       | Materials & Prep          |
+|:-----------|:-------------------------:|
+| 2024-07-25 | First meeting - look at foundations quizzes |
+| 2024-08-15 | Read Ch. 2-4 & attempt exercises |
+
