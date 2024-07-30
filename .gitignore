@@ -50,3 +50,8 @@ rsconnect/
 
 # misc files
 .DS_Store
+
+# Rendered Quarto files
+*/*_files/
+*.html
+*.pdf
