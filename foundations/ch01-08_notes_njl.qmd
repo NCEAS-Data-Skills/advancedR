@@ -3,13 +3,100 @@ title: "Foundations Notes"
 author: "Nick J Lyon"
 format: html
 engine: knitr
+code-overflow: wrap
 ---
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
 
 ## [Chapter 2](https://adv-r.hadley.nz/names-values.html) - Names & Values
 
+```{r 02-libs}
+#| echo: false
+#| message: false
 
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(lobstr)
+```
 
+### Binding Basics - Notes
 
+Objects are not the same as their names. In the following code, two things are happening: (1) an object is created that is a vector of values and (2) that object is bound to the name `x`.
+
+```{r 02-bind-note1_make-obj}
+x <- c(1, 2, 3)
+```
+
+Names can be thought of as references to a particular value. If you run the following code _you do not get another copy of the value,_ instead <u>you get another binding to the existing object</u>.
+
+```{r 02-bind-note2_copy-obj}
+y <- x
+```
+
+We can confirm this by checking both objects' "memory addresses". These are the unique identifiers indicating where in the computer's memory a particular object is stored. This uses functions from the `lobstr` package.
+
+We can see in the following code that even though the objects have different names, they have the same memory address.
+
+```{r 02-bind-note3_check-mem-address}
+lobstr::obj_addr(x = x)
+lobstr::obj_addr(x = y)
+```
+
+Note that R strictly enforces the use of **syntactic names**. These are names that consist of some combination of letters, numbers, `.`, and/or `_` (but do not begin with `.` or `_`). Also there are certain <u>reserved words</u> (e.g., `TRUE`, `NULL`, `function`, etc.) that are not valid names even though they are comprised of valid characters. A full list of these reserved names can be returned by running `?Reserved`.
+
+These rules can be overridden by surrounding the desired name with backticks (\`) but doing so is cumbersome in the long run.
+
+### Binding Basics -- Exercises
+
+1. Explain the relationship between `a`, `b`, `c`, and `d` in the following code:
+
+```{r 02-bind-ex_q1}
+a <- 1:10
+b <- a
+c <- b
+d <- 1:10
+```
+
+> [`a`, `b`, and `c` are all different names for the same object. Despite containing the same values, `d` is a name for a different object.]{.answer}
+
+```{r 02-bind-ex_a1}
+lobstr::obj_addr(x = a); lobstr::obj_addr(x = b); lobstr::obj_addr(x = c)
+lobstr::obj_addr(x = d)
+```
+
+2. The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
+
+```{r 02-bind-ex_q2}
+#| eval: false
+mean
+base::mean
+get("mean")
+evalq(mean)
+match.fun("mean")
+```
+
+> [They do all point at the same function. This is supported by the fact they share memory addresses.]{.answer}
+
+```{r 02-bind-ex_a2}
+lobstr::obj_addr( x = mean ); lobstr::obj_addr( x = base::mean ); lobstr::obj_addr( x = get("mean") ); lobstr::obj_addr( x = evalq(mean) ); lobstr::obj_addr( x = match.fun("mean") )
+```
+
+3. By default, base R data import functions, like `read.csv()`, will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+
+> [This is problematic when crucial information is contained in the invalid characters. For instance, a column might have a percent symbol (`%`) to indicate the units of the column but the syntactically valid variant of the column would lose that unit information. This behavior can be turned off by the `check.names` argument of `read.csv`.]{.answer}
+
+4. What rules does `make.names()` use to convert non-syntactic names into syntactic ones?
+
+> [Invalid characters are replaced by periods, an "X" is prepended if necessary, and reserved words have a period preprended. Missing values are replaced with "NA". If `unique = TRUE` then numbers will be appended to non-unique names (after being made syntactic).]{.answer}
+
+5. I slightly simplified the rules that govern syntactic names. Why is `.123e1` not a syntactic name? Read `?make.names` for the full details.
+
+> [It evaluates to a number in scientific notation (`1.23`). `make.names` preprends an "X" to make it syntactically valid]{.answer}
 
 ## [Chapter 3](https://adv-r.hadley.nz/vectors-chap.html) - Vectors
 
