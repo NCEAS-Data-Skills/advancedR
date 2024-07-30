@@ -1,0 +1,27 @@
+---
+title: "Foundations Notes"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+---
+
+## [Chapter 2](https://adv-r.hadley.nz/names-values.html) - Names & Values
+
+
+
+
+
+## [Chapter 3](https://adv-r.hadley.nz/vectors-chap.html) - Vectors
+
+
+
+## [Chapter 4](https://adv-r.hadley.nz/subsetting.html) - Subsetting
+
+
+
+
+
+
+
+
+
