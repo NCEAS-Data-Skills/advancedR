@@ -22,9 +22,31 @@ librarian::shelf(lobstr, bench)
 }
 ```
 
+## Selecting Multiple Elements -- Notes
 
 
 
+## Selecting Multiple Elements -- Exercises
+
+
+
+## Selecting a Single Element -- Notes
+
+
+
+## Selecting a Single Element -- Exercises
+
+
+
+## Subsetting & Assignment -- Notes
+
+
+
+## Applications -- Notes
+
+
+
+## Applications -- Exercises
 
 
 
