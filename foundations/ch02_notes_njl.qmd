@@ -1,5 +1,5 @@
 ---
-title: "Foundations Notes"
+title: "Chapter 2 - Names & Values"
 author: "Nick J Lyon"
 format: html
 engine: knitr
@@ -12,7 +12,7 @@ code-overflow: wrap
 
 # Install/load needed libraries
 ## install.packages("librarian")
-librarian::shelf(lobstr, bench) # Ch. 02
+librarian::shelf(lobstr, bench)
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -22,9 +22,7 @@ librarian::shelf(lobstr, bench) # Ch. 02
 }
 ```
 
-## [Chapter 2](https://adv-r.hadley.nz/names-values.html) - Names & Values
-
-### Binding Basics - Notes
+## Binding Basics - Notes
 
 Objects are not the same as their names. In the following code, two things are happening: (1) an object is created that is a vector of values and (2) that object is bound to the name `x`.
 
@@ -51,7 +49,7 @@ Note that R strictly enforces the use of **syntactic names**. These are names th
 
 These rules can be overridden by surrounding the desired name with backticks (\`) but doing so is cumbersome in the long run.
 
-### Binding Basics -- Exercises
+## Binding Basics -- Exercises
 
 1. Explain the relationship between `a`, `b`, `c`, and `d` in the following code:
 
@@ -98,7 +96,7 @@ lobstr::obj_addr( x = mean ); lobstr::obj_addr( x = base::mean ); lobstr::obj_ad
 
 > [It evaluates to a number in scientific notation (`1.23`). `make.names` preprends an "X" to make it syntactically valid]{.answer}
 
-### Copy-on-Modify -- Notes
+## Copy-on-Modify -- Notes
 
 Anyone who has worked with R has noticed that when you create a new object by modifying an existing one, you don't affect the original one. This is because of R's **copy-on-modify** behavior, where R creates a copy of the first object then binds it to the new name. This might be paraphrased as R's objects being _immutable_, though their are exceptions.
 
@@ -106,7 +104,7 @@ Note that this is an important difference from `fontawesome::fa(name = "python",
 
 In R, we can trace when a given object is copied (and from what) using the `base::tracemem()` function. Note this doesn't work as expected in RStudio so you'll need to use the Terminal or R directly to experiment. Also, remember to use `base::untracemem()` when you're done to stop getting the memory address / object history for every line of code!
 
-#### Copy-on-Modify -- Lists
+### Copy-on-Modify -- Lists
 
 Instead of storing the values themselves, each element of a list stores references to the values it "contains". This means that modifying one element of a list means that the unchanged elements of both lists (old and new) share memory addresses with their counterpart in the other list while the changed elements have different memory addresses. There's a really nice diagram of this in [Section 2.3.3](https://adv-r.hadley.nz/names-values.html#list-references).
 
@@ -125,11 +123,11 @@ lobstr::ref(l1)
 lobstr::ref(l2)
 ```
 
-#### Copy-on-Modify -- Dataframes
+### Copy-on-Modify -- Dataframes
 
 Dataframes are lists of vectors (i.e., columns) which has an important consequence for copy-on-modify and where in computer memory objects are stored. If you modify a _column_ only that column needs a new object in computer memory. However, if you modify a _row_, **every** column is modified and all must be stored as new objects.
 
-#### Copy-on-Modify -- Character Vectors
+### Copy-on-Modify -- Character Vectors
 
 R stores characters in a **global string pool** where each element of a character vector is a pointer to a unique string in the pool. We can check this with `lobstr::ref()`--just like we can check lists--but we have to set the `character` argument to `TRUE`.
 
@@ -141,7 +139,7 @@ my_char <- c("a", "a", "abc", "d")
 lobstr::ref(my_char, character = TRUE)
 ```
 
-### Copy-on-Modify -- Exercises
+## Copy-on-Modify -- Exercises
 
 1. Why is `tracemem(1:10)` not useful?
 
@@ -189,7 +187,7 @@ x[[2]] <- x
 lobstr::ref(x)
 ```
 
-### Object Size -- Notes
+## Object Size -- Notes
 
 You can see how much memory an object takes with `lobstr::obj_size()`.
 
@@ -219,7 +217,7 @@ lobstr::obj_size(1:3)
 lobstr::obj_size(1:1e9)
 ```
 
-### Object Size -- Exercises
+## Object Size -- Exercises
 
 1.In the following example, why are `object.size(y)` and `obj_size(y)` so radically different? Consult the documentation of `object.size()`.
 
@@ -265,14 +263,14 @@ obj_size(a, b)
 
 [`a` and `b` (line 4 version) both contain bindings to the same underlying object so lines 2, 5, and 6 will return basically the same value. \n `b` (line 8 ver.) contains the original object as well as a modified version of the object. Therefore, lines 9 and 10 should return the same value but that value will be double that of lines 2, 5, and 6. \n `b` (line 12 ver.) contains two objects of equivalent size to `a` though neither _is_ `a`. So, line 13 will return the same value as lines 9 and 10 but line 14 will return that value + 50% (i.e., triple the size reported by lines 2, 5, and 6) ]{.answer}
 
-### Modify-in-Place -- Notes
+## Modify-in-Place -- Notes
 
 There are some exceptions to copy-on-modify, namely:
 
 1. Objects with a single binding get a special performance optimization
 2. Environments (which are a special type of object) are always modified in place
 
-#### Modify-in-Place -- Single Binding Objects
+### Modify-in-Place -- Single Binding Objects
 
 Let's explore an example. We'll subtract the median from each column of a very large dataframe.
 
@@ -303,13 +301,13 @@ for (i in 1:5) {
 untracemem(x)
 ```
 
-#### Modify-in-Place -- Environments
+### Modify-in-Place -- Environments
 
 Environments are always modified in place. This is sometimes called "**reference semantics**" because when you modify an environment, all existing bindings to that environment continue to have the same reference.
 
 Environments can also refer to themselves (which is a unique property of environments).
 
-### Modify-in-Place -- Exercises
+## Modify-in-Place -- Exercises
 
 1. Explain why the following code doesn't create a circular list.
 
@@ -392,7 +390,7 @@ summary(timings2)
 
 [You get the following error: `'tracemem' is not useful for promise and environment objects`]{.answer}
 
-### Unbinding & Garbage Collector -- Notes
+## Unbinding & Garbage Collector -- Notes
 
 When you use `rm()` you only remove the _names_ bound to the objects, not the objects themselves. This means that at the end of your code you might have many objects in your computer memory that have no names.
 
@@ -401,19 +399,3 @@ We can remove such objects with the **garbage collector** (a.k.a. "GC"). R uses 
 It is impossible to know when the GC will run itself (though it does happen automatically) and there is no need to run it manually (via `gc()`) unless you want to ask R to set aside memory for non-R programs and/or for the side-effect that it tells you how much memory is currently being used.
 
 In that latter case, you could use `lobstr::mem_used()` to get the number of bytes currently being used. Though this number will differ from the amount of memory reported by your OS because (1) it includes objects created by R but not the R interpreter, (2) R might be 'holding on to' memory that the OS hasn't asked to be returned, and (3) R counts memory occupied by objects but there may be empty gaps due to deleted objects (phenomenon known as "memory fragmentation").
-
-
-## [Chapter 3](https://adv-r.hadley.nz/vectors-chap.html) - Vectors
-
-
-
-## [Chapter 4](https://adv-r.hadley.nz/subsetting.html) - Subsetting
-
-
-
-
-
-
-
-
-
