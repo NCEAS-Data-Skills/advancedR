@@ -4,23 +4,78 @@ format: html
 editor: visual
 ---
 
-## Quarto
+## 2.2 Binding Basics
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+- R binds names to objects; so two "names" can point to the same object
+- names have values, the object itself doesn't have a name per se
+- when naming, if using non-syntactic names you need to use backticks (``) rather
+than quotes or else you have to retrieve names in different ways
 
-## Running Code
+### Exercises 
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+1. Explain the relationship between `a`, `b`, `c` and `d` in the following code:
 
-```{r}
-1 + 1
+```{r ex_2.2.1}
+a <- 1:10
+b <- a
+c <- b
+d <- 1:10
+
 ```
 
-You can add options to executable code like this
+1. The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
 
 ```{r}
-#| echo: false
-2 * 2
+lobstr::obj_addr(mean)
+lobstr::obj_addr(base::mean)
+lobstr::obj_addr(get("mean"))
+lobstr::obj_addr(evalq(mean))
+lobstr::obj_addr(match.fun("mean"))
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+Ok, yes they do! Interesting that there are so many ways to access the function.
+
+1. By default, base R data import functions, like read.csv(), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+
+you may not know how to access the names? if people are using different read in functions 
+that could lead to difficulties working on the same dataset?
+
+1. What rules does make.names() use to convert non-syntactic names into syntactic ones?
+
+1. I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+
+
+## 2.3 Copy on Modify
+
+### Notes
+
+- woah, lists seem complicated
+
+- names point to the same object until that object is modified, at which point
+a copy is made
+
+- how the copy is made depends on the object type - lists that are modified do not 
+copy un-modified list items, they still point to the original list objects 
+
+- data.frames will only copy columns that need to be modified, but point to unchanged 
+columns in the original object
+
+- changing rows copies the entire data frame
+
+### Exercises
+
+1. Why is tracemem(1:10) not useful?
+
+1. Explain why tracemem() shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
+
+```{r}
+x <- c(1L, 2L, 3L)
+tracemem(x)
+x
+x[[3]] <- 4
+```
+
+It seems like maybe it creates two copies because first it has to change the 
+vector type (integer to numeric) and then modify the value
+
+
