@@ -22,10 +22,47 @@ librarian::shelf(lobstr, bench)
 }
 ```
 
+## Atomic Vectors -- Notes
 
 
 
+## Atomic Vectors -- Exercises
 
+
+
+## Attributes -- Notes
+
+
+
+## Attributs -- Exercises
+
+
+
+## S3 Atomic Vectors -- Notes
+
+
+
+## S3 Atomic Vectors -- Exercises
+
+
+
+## Lists -- Notes
+
+
+
+## Lists -- Exercises
+
+
+
+## Dataframes & Tibbles -- Notes
+
+
+
+## Dataframes & Tibbles -- Exercises
+
+
+
+## NULL -- Notes
 
 
 
