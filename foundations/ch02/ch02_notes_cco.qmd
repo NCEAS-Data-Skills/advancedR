@@ -1,0 +1,496 @@
+---
+title: "Chapter 2 notes"
+author: "Casey O'Hara"
+format: 
+  html:
+    embed-resources: true
+editor: visual
+---
+
+
+```{r setup}
+library(lobstr)
+library(bench)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+# 2.2 Binding Basics
+
+For something like this:
+```{r}
+x <- c(1, 2, 3)
+```
+
+`x` is not the vector `c(1, 2, 3)` but a name that points to ('binds', 'references') the value (i.e., the vector).  This seems similar to pointers in C if I remember right.  In that case, a pointer is a name that references a specific location in memory (which in this case, holds a vector).
+
+But then:
+```{r}
+y <- x
+```
+
+`y` is not a pointer to `x` but rather a pointer back to the *value* bound to `x`, so now both names are bound to the same vector.
+
+Check addresses, note they're the same (though will change each time I run R, or even if I rerun the previous chunks in the same session):
+```{r}
+lobstr::obj_addr(x); obj_addr(y)
+```
+
+## 2.2.1 Non-syntactic names
+
+Rules for names... but can break those rules if you enclose the broken name with backticks (can also do with quotes, but that works differently)
+
+```{r}
+`if` <- 10; `if`
+"_abc" <- 'broken' ### how to retrieve? not really a big concern...
+```
+
+### 2.2.2 Exercises
+
+1.  Explain the relationship among all these:
+
+```{r}
+a <- 1:10
+b <- a
+c <- b
+d <- 1:10
+```
+
+> [First line creates a vector and binds to `a`.  Second and third lines bind `b` to `a` and `c` to `b`, but all are still pointing to the same address in memory.  Fourth line creates a new vector and binds to `d`, which is independent of `a`, `b`, `c`]{.answer}
+    
+2. The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object?
+
+```{r}
+mean               |> obj_addr()
+base::mean         |> obj_addr()
+get("mean")        |> obj_addr()
+evalq(mean)        |> obj_addr()
+match.fun("mean")  |> obj_addr()
+```
+
+> [All are the same function, `mean`, with same bytecode (what exactly is that?); and they all seem to exist at the same address. This implies that all calls to this function are grabbing the same exact function (same instance).]{.answer}
+
+3. By default, base R data import functions, like `read.csv()`, will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+
+> [I suppose it could be problematic if the original names were important, contained important information that would otherwise be lost? To suppress this, we can set `check.names` to `FALSE`.]{.answer}
+
+4. What rules does `make.names()` use to convert non-syntactic names into syntactic ones?
+
+> [Replaces non-allowed characters (spaces, dashes, etc) with periods; allows internal underscores by default.  If prefix is not allowed, sticks an `X` in front.]{.answer}
+
+5. I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+
+> [`.e1` would be syntactic, where a period followed by a letter is OK - but a period followed by a number (or non-letter) would be all bad.  It looks like multiple periods works too!  but values are hidden in the environment?]{.answer}
+    
+```{r}
+.x <- 1; ..x <- 2; .x + ..x
+```
+    
+## 2.3 Copy-on-modify
+
+When creating multiple bindings to the same object, if one of those bindings is modified, a copy of the bound value is made, and then modified.
+
+```{r}
+x <- 1:3
+y <- x
+obj_addr(x); obj_addr(y)
+
+y[3] <- 4
+obj_addr(x); obj_addr(y)
+```
+
+Note that RStudio can give different results, because of the way the Environment pane works.
+
+### 2.3.1 `tracemem()`
+
+```{r}
+x <- 1:3
+tracemem(x)
+y <- x
+y[[3]] <- 4
+y[[2]] <- 7
+untracemem(x)
+```
+
+Notifies when an object is copied, incl new address and the calls that lead to the copy.  Supposedly,
+
+> If you modify y again, it won’t get copied. That’s because the new object now only has a single name bound to it, so R applies modify-in-place optimisation. We’ll come back to this in Section 2.5.
+
+But when running interactively within RStudio the `y[[2]] <- 7` seems to drive another copy... is this because of RStudio?  
+
+* try it in R... Confirmed!  in R console (not RStudio R console) these additional copies are NOT made.  
+* ALSO: no additional copies when rendered (rendering is not within RStudio).
+
+### 2.3.2 Function calls
+
+```{r}
+f <- function(a) {
+  print(obj_addr(a))
+  a
+}
+
+x <- c(1, 2, 3)
+cat(tracemem(x), "\n")
+#> <0x7fe1121693a8>
+
+obj_addr(x)
+z <- f(x)
+# there's no copy here!
+
+untracemem(x)
+```
+
+The argument `a` gets `x`, and so `a` within the function points to the same address as `x`.  If it is unmodified within the function, no copy is made.  If modified within the function, then a copy is made (within the function)
+
+### 2.3.3 Lists
+
+Elements of lists point to values.
+
+```{r}
+
+l1 <- list(1, 2, 3)
+l2 <- l1
+
+# lobstr::ref(l1)
+# █ [1:0x1851399d648] <list> 
+# ├─[2:0x185139e2910] <dbl> 
+# ├─[3:0x185139e28d8] <dbl> 
+# └─[4:0x185139e28a0] <dbl>
+
+# ref(l2)  
+# █ [1:0x1851399d648] <list> # <1>
+# ├─[2:0x185139e2910] <dbl> 
+# ├─[3:0x185139e28d8] <dbl> 
+# └─[4:0x185139e28a0] <dbl> 
+
+l2[[3]] <- 11
+# ref(l2)
+# █ [1:0x185143ce708] <list> # <2>
+# ├─[2:0x185139e2910] <dbl> 
+# ├─[3:0x185139e28d8] <dbl> 
+# └─[4:0x18514414f98] <dbl>
+```
+1. List and all elements the same
+2. List is copied & modified; element 1 and 2 unchanged; element 3 copied & modified
+
+Hmm:
+
+> Like vectors, lists use copy-on-modify behaviour; the original list is left unchanged, and R creates a modified copy. This, however, is a shallow copy: the list object and its bindings are copied, but the values pointed to by the bindings are not. The opposite of a shallow copy is a deep copy where the contents of every reference are copied. Prior to R 3.1.0, copies were always deep copies.
+
+R had (has?) a bad reputation about memory management.  Perhaps this change in version 3.1.0 reduced memory allocation issues by reducing the number of copied references?
+
+### 2.3.4 Data frames
+
+Dataframes are lists of vectors.  Each column is one element in the list; each row is an element in the vector pointed to by that column element.
+
+```{r}
+
+d1 <- data.frame(x = c(1, 5, 6), y = c(2, 4, 3))
+d2 <- d1
+
+### modify one column (multiply column y values by 2)
+d2[, 2] <- d2[, 2] * 2
+# ref(d1); ref(d2)
+# █ [1:0x1850d841438] <df[,2]> 
+# ├─x = [2:0x1850f9f45c8] <dbl> 
+# └─y = [3:0x1850f9f4708] <dbl> 
+# █ [1:0x1850d844008] <df[,2]>  # <1> 
+# ├─x = [2:0x1850f9f45c8] <dbl> # <2> 
+# └─y = [3:0x1850dc34648] <dbl> # <3> 
+```
+1. list is copied and modified
+2. column x is unmodified
+3. column y is copied and modified
+
+```{r}
+### modify one row (multiply row 1 values by 3)
+d3 <- d1 ### no copy
+d3[1, ] <- d3[1, ] * 3
+# ref(d1); ref(d3)
+# █ [1:0x1850d841438] <df[,2]> 
+# ├─x = [2:0x1850f9f45c8] <dbl> 
+# └─y = [3:0x1850f9f4708] <dbl> 
+# █ [1:0x1850da43d78] <df[,2]>  # <1>  
+# ├─x = [2:0x1850b46cb08] <dbl> # <1>
+# └─y = [3:0x1850b46cab8] <dbl> # <1>
+```
+1. list and all columns are copied and modified
+
+
+### 2.3.5 Character vectors
+
+Character vectors are a "polite fiction" - each element is actually a pointer to a unique string in a "global string pool"
+
+> This has a profound impact on the amount of memory a character vector uses but is otherwise generally unimportant...
+
+Profound impact on memory, because you are not storing multiple instances of the same string - each string is stored once, and then multiple instances would just be pointers to that same version in memory.  The top level character vectors change, but the string objects that make up the elements of the vector remain at the same address!
+
+```{r}
+
+
+x <- c("a", "a", "abc", "d")
+# ref(x, character = TRUE) ### character = TRUE to show string references
+# █ [1:0x18512c09618] <chr> 
+# ├─[2:0x18505c83de0] <string: "a">  # <1>
+# ├─[2:0x18505c83de0]                # <1>
+# ├─[3:0x18507de0848] <string: "abc"> 
+# └─[4:0x185061c6690] <string: "d"> 
+
+x[2] <- 'abc'
+# ref(x, character = TRUE)
+# █ [1:0x185131bdb78] <chr>           # <2>
+# ├─[2:0x18505c83de0] <string: "a">   # <3>
+# ├─[3:0x18507de0848] <string: "abc"> # <4>
+# ├─[4:0x18507de0848] <string: "abc"> # <3>
+# └─[5:0x185061c6690] <string: "d">   # <3>
+
+y <- x[2]
+# ref(y, character = TRUE)
+# █ [1:0x18510bf57e0] <chr> 
+# └─[2:0x18507de0848] <string: "abc">   # <5>
+```
+1. Elements 1 and 2 point to same address, with same string
+2. `x` is a new copy?  is that just because of RStudio? (nope, happens in R too)
+3. Elements 1, 3, 4 unchanged
+4. Element 2 points to a different address with a different string (but string itself is already in the global pool so points to existing address)
+5. `y` is the second element of `x`; the top level has its own address, but the string `'abc'` points to the same address as in `x`.
+
+### 2.3.6 Exercises
+
+1. Why is `tracemem(1:10)` not useful?
+
+> [It will create a vector and point to an address, but that address is unassigned to any names, so you won't be able to grab that address and use it for anything... kind of creating an orphan vector.]{.answer}
+
+2. Explain why `tracemem()` shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
+
+```{r}
+x <- c(1L, 2L, 3L)
+tracemem(x)
+
+x[[3]] <- 4L
+x[[3]] <- 5L
+```
+
+>[If I run this in R, I only get a single instance of copying.  That is because the original `x` is integer type, and apparently assigning a double to the third element forces a copy-on-modify.  If I instead assign an integer value, no copy is necessary.]{.answer}
+
+??? Is this because the elements of an integer vector require less memory than a double vector, so changing the type requires reallocating memory from scratch?
+
+NOTE: running this in RStudio interactive mode triggers an additional copy because of the Environment pane...
+
+3. Sketch out the relationship between the following objects:
+
+```{r}
+a <- 1:10
+b <- list(a, a)
+c <- list(b, a, 1:10)
+```
+
+```
+(a) -> [1|2|3|...|10].
+        ^
+        |\___
+        |\   \
+        | |   \
+(b) -> [.|.]  |
+        ^  ___/
+        | /
+(c) -> [.|.|.]
+            |
+           [1|2|3|...|10]
+```
+
+4. What happens when you run this code?
+
+```{r}
+
+x <- list(1:10)
+# ref(x)
+# █ [1:0x18512cd47e8] <list> # <1>
+# └─[2:0x1851306c848] <int>  # <2>
+  
+x[[2]] <- x
+# ref(x)
+# █ [1:0x1851321d578] <list>   # <3>
+# ├─[2:0x1851306c848] <int>    # <2>
+# └─█ [3:0x18512cd47e8] <list> # <4>
+#   └─[2:0x1851306c848]        # <5>
+```
+1. address of original list, first assigned to `x`
+2. the first element, containing the integer vector (does not change)
+3. `x` has been copied-on-modify to a new location
+4. The original list is assigned to element 2, but the name is unbound (I guess this must happen before the copy-on-modify, before the name is reassigned to a new address?)
+5. Same pointer to same integer vector!
+
+>[The original `x` is a single-element list, with a pointer to the integer vector `1:10`.  Then `x[[2]]` creates a second element in `x`, requiring `x` to be copied-modified, but the second element is pointing to the original list formerly known as `x` - and the integer vector is referenced within `x[[1]]` and `x[[2]][[1]]`.]{.answer}
+
+## 2.4 Object size
+
+```{r}
+obj_size(letters)
+#> 1,712 B
+obj_size(ggplot2::diamonds)
+#> 3,456,344 B
+#> 
+#> 
+x <- runif(1e6)
+obj_size(x)
+#> 8,000,048 B
+
+y <- list(x, x, x)
+obj_size(y)
+#> 8,000,128 B
+
+obj_size(x, y)
+
+```
+
+This is cool:
+
+> Finally, R 3.5.0 and later versions have a feature that might lead to surprises: ALTREP, short for alternative representation. This allows R to represent certain types of vectors very compactly. 
+
+### 2.4.1 Exercises
+
+1. In the following example, why are `object.size(y)` and `obj_size(y)` so radically different? Consult the documentation of `object.size()`.
+
+```{r}
+y <- rep(list(runif(1e4)), 100)
+
+object.size(y)
+#> 8005648 bytes
+obj_size(y)
+#> 80,896 B
+
+```
+
+>[The `obj_size(y)` calculation takes into account that it is 100 repetitions of the same 10k random numbers.  The list bound to `y` has 100 elements all pointing to the same random vector, so the vector only has to be in memory once.  However, `object.size()` does not detect whether elements of a list are shared, per the documentation, so over-predicts.]{.answer}
+
+2. Take the following list. Why is its size somewhat misleading?
+
+```{r}
+funs <- list(mean, sd, var)
+obj_size(funs)
+#> 17,608 B
+```
+
+>[These functions are automatically loaded when R is started (along with many other functions and base R packages), so you can't do much about the memory allocated to them... so, if it doesn't change your workflow, why bother?]{.answer}
+
+3. Predict the output of the following code:
+
+```{r}
+a <- runif(1e6)
+obj_size(a) ### Baseline: 8 MB: 8 bytes for each element of the vector
+```
+
+```{r}
+b <- list(a, a)
+obj_size(b) 
+obj_size(a, b) 
+```
+
+>[Here, `b` is two pointers to the same vector named `a`; therefore `it`obj_size(b)` would be just a few bytes larger than `a`.  `obj_size(a, b)` will also be about 8 MB since a and the two elements of b all point to the same address.]{.answer}
+
+```{r}
+b[[1]][[1]] <- 10
+obj_size(b) 
+obj_size(a, b)
+```
+>[The first line changes the first element of the first instance of the random vector.  But this requires copy-on-modify, so now the first part of `b` is no longer the same address as the original vector named `a`.  Therefore, `b` will be 16 MB: two 8 MB vectors (original and slightly modified copy).  `obj_size(a, b)` will be about 16 MB too, since it recognizes that part of `b` shares the same address in memory as `a`.]{.answer}
+
+```{r}
+b[[2]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+```
+>[The first line changes the first element of the *second* instance of the random vector, again requiring copy-on-modify, so now neither element of b points to the same address as the original vector named `a`.  But they're still both pointed at vectors of about 8 MB, so `b` will be 16 MB: two slightly modified versions of the vector bound to `a`.  `obj_size(a, b)` will be about 24 MB new, since it recognizes that neither part of `b` shares the same address in memory as `a`.]{.answer}
+
+## 2.5 Modify-in-place
+
+### 2.5.1 Objects with a single binding
+
+If an object is bound to a *single* name, R modifies in place (though RStudio in interactive mode fucks this up a bit):
+
+```{r}
+v <- c(1, 2, 3); obj_addr(v)
+v[[3]] <- 4; obj_addr(v)
+```
+Exceptions:
+
+* If you have two or more bindings, and one goes away, R doesn't know this so will probably keep making copies.
+* Functions typically make a reference to the object... does that cause the previous thing to kick in, since there are now multiple bindings?
+
+For-loops often make copies on every iteration (whether you recognize or not), which is slow!
+
+```{r}
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+medians <- vapply(x, median, numeric(1))
+
+tracemem(x)
+for (i in seq_along(medians)) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+```
+
+As a `data.frame`, the `[[` is a function (see `` `[[<-.data.frame` ``) that ends up creating references, so it can't modify-in-place?
+
+```{r}
+y <- as.list(x)
+
+tracemem(y)
+for (i in 1:5) {
+  y[[i]] <- y[[i]] - medians[[i]]
+}
+```
+
+But for a list, it uses the primitive `` `[[` `` so no references are incremented.
+
+### 2.5.2 Environments
+
+Environments are always modify-in-place.
+
+```{r}
+e1 <- rlang::env(a = 1, b = 2, c = 3)
+e2 <- e1
+```
+
+Here the environment is bound to both `e1` and `e2` - multiple references, so a regular object would not modify-in-place.
+
+But `e1` and `e2` point to the same location, and modification doesn't change that (modify-in-place); the change applies to both instances at once:
+```{r}
+e2$c <- 4
+e1$c
+```
+
+And because of this environments can contain themselves, though why would you want that? (check Section 10.2.4 I guess)
+
+```{r}
+e <- rlang::env()
+e$self <- e
+
+ref(e)
+#> █ [1:0x7fe114214cd8] <env> 
+#> └─self = [1:0x7fe114214cd8]
+```
+
+### 2.5.3 Exercises
+
+1. Explain why the following code doesn’t create a circular list.
+
+```{r}
+x <- list()
+x[[1]] <- x
+```
+
+> [The `x[[1]] <- x` requires a copy-on-modify, so it creates a new address, points `x` towards it, but adds a pointer to the original location (no longer bound to `x`) as the first element.  I don't know what order that has to happen!]{.answer}
+
+2. Wrap the two methods for subtracting medians into two functions, then use the `bench` package to carefully compare their speeds. How does performance change as the number of columns increase?
+>[I'll skip this one and just check the key... dataframe processing time increases quadratically with columns, while list version increases linearly...]{.answer}
+
+3. What happens if you attempt to use `tracemem()` on an environment?
+
+>[Environments are always modify-in-place so it would not make sense.  It throws an error.]{.answer}
+
