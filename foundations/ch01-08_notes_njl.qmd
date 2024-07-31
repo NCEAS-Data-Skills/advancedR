@@ -12,7 +12,7 @@ code-overflow: wrap
 
 # Install/load needed libraries
 ## install.packages("librarian")
-librarian::shelf(lobstr)
+librarian::shelf(lobstr, bench) # Ch. 02
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -267,15 +267,140 @@ obj_size(a, b)
 
 ### Modify-in-Place -- Notes
 
+There are some exceptions to copy-on-modify, namely:
+
+1. Objects with a single binding get a special performance optimization
+2. Environments (which are a special type of object) are always modified in place
+
+#### Modify-in-Place -- Single Binding Objects
+
+Let's explore an example. We'll subtract the median from each column of a very large dataframe.
+
+```{r 02-mod-place-note_demo-slow}
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+medians <- vapply(x, median, numeric(1))
+
+cat(tracemem(x), "\n")
+
+for (i in 1:5) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+
+untracemem(x)
+```
+
+If we convert the dataframe to a list we find that far fewer copies are produced and subsequently the loop is _much_ faster.
+
+```{r 02-mod-place-note_demo-fast}
+y <- as.list(x)
+
+cat(tracemem(y), "\n")
+
+for (i in 1:5) {
+  y[[i]] <- y[[i]] - medians[[i]]
+}
+
+untracemem(x)
+```
+
+#### Modify-in-Place -- Environments
+
+Environments are always modified in place. This is sometimes called "**reference semantics**" because when you modify an environment, all existing bindings to that environment continue to have the same reference.
+
+Environments can also refer to themselves (which is a unique property of environments).
+
 ### Modify-in-Place -- Exercises
 
+1. Explain why the following code doesn't create a circular list.
 
+```{r 02-mod-place-note_q1}
+#| eval: false
+
+x <- list()
+x[[1]] <- x
+```
+
+[You don't get a circular list because the ability of an object or reference itself is unique to environment objects.]{.answer}
+
+2. Wrap the two methods for subtracting medians into two functions, then use the `bench` package to carefully compare their speeds. How does performance change as the number of columns increase?
+
+```{r 02-mod-place-note_a2-p1}
+# Define first function
+df_fxn <- function(obj, stat){
+  
+  # Duplicate object
+  obj2 <- obj
+  
+  # Subract given stat from each 
+  for (i in seq_along(stat)) {
+    obj2[[i]] <- obj2[[i]] - stat[[i]]
+  }
+
+  # Return result
+  return(as.list(obj2))
+}
+
+# Define second function
+list_fxn <- function(obj, stat){
+  
+  # Make the object a list
+  obj2 <- as.list(obj)
+  
+  # Subract given stat from each 
+  for (i in seq_along(stat)) {
+    obj2[[i]] <- obj2[[i]] - stat[[i]]
+  }
+
+  # Return result
+  return(obj2)
+}
+
+# Create needed objects
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+medians <- vapply(x, median, numeric(1))
+
+# Invoke both functions
+timings <- bench::mark(
+  df_fxn(obj = x, stat = medians),
+  list_fxn(obj = x, stat = medians)
+)
+
+# Check results
+summary(timings)
+```
+
+Check again with more columns to check for changing efficiency/scalability.
+
+```{r 02-mod-place-note_a2-p2}
+# Create needed objects
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 10))
+medians <- vapply(x, median, numeric(1))
+
+# Invoke both functions
+timings2 <- bench::mark(
+  df_fxn(obj = x, stat = medians),
+  list_fxn(obj = x, stat = medians)
+)
+
+# Check results
+summary(timings2)
+```
+
+[When you run the two functions on just five columns the performance of the dataframe function is worse (about 2x the median completion time). If you double the number of columns you get a near tripling of completion time for the dataframe-based function while the list-based one gets only marginally slower.]{.answer}
+
+3. What happens if you attempt to use tracemem() on an environment?
+
+[You get the following error: `'tracemem' is not useful for promise and environment objects`]{.answer}
 
 ### Unbinding & Garbage Collector -- Notes
 
-### Unbinding & Garbage Collector -- Exercises
+When you use `rm()` you only remove the _names_ bound to the objects, not the objects themselves. This means that at the end of your code you might have many objects in your computer memory that have no names.
 
+We can remove such objects with the **garbage collector** (a.k.a. "GC"). R uses a <u>tracing</u> GC which means that every object reachable from the global environment and the objects reachable from those objects (and so on). The GC does not use the modify-in-place reference count we covered above.
 
+It is impossible to know when the GC will run itself (though it does happen automatically) and there is no need to run it manually (via `gc()`) unless you want to ask R to set aside memory for non-R programs and/or for the side-effect that it tells you how much memory is currently being used.
+
+In that latter case, you could use `lobstr::mem_used()` to get the number of bytes currently being used. Though this number will differ from the amount of memory reported by your OS because (1) it includes objects created by R but not the R interpreter, (2) R might be 'holding on to' memory that the OS hasn't asked to be returned, and (3) R counts memory occupied by objects but there may be empty gaps due to deleted objects (phenomenon known as "memory fragmentation").
 
 
 ## [Chapter 3](https://adv-r.hadley.nz/vectors-chap.html) - Vectors
