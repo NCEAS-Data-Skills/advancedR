@@ -494,3 +494,8 @@ x[[1]] <- x
 
 >[Environments are always modify-in-place so it would not make sense.  It throws an error.]{.answer}
 
+## 2.6 Unbinding and the garbage collector
+
+When objects are created and not bound to a name (either because name is redirected to a different object, or using `rm(x)`), those objects may still be taking up memory.  The garbage collection routine is automatically run whenever R needs more memory - hard to predict when.
+
+Force garbage collection using `gc()` but not actually ever necessary for R!  But maybe you want to return memory to the operating system for other applications.
