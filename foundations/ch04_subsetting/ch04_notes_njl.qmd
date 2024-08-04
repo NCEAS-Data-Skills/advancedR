@@ -6,11 +6,43 @@ engine: knitr
 code-overflow: wrap
 ---
 
+## Introduction
+
+There are six ways to subset atomic vectors. There are three subsetting operators (`[[`, `[`, and `$`). These operators work differently with different vector types (e.g., lists, matrices, etc.).
+
 ## Selecting Multiple Elements
 
+### Multiple Elements -- Atomic Vectors
+
+You can use `[` to select any number of elements from a vector. Depending on what you put in the `[`, you can subset in six different ways.
+
+| **Entry** | **Result** | 
+|:---:|:---:|
+| Positive integers | subset to elements at those positions |
+| Negative integers | remove elements at those positions |
+| Logicals | elements that evaluate to `TRUE` |
+| Nothing (e.g., `x[]`) | the original vector (more useful for more complex data types) |
+| Zero (e.g., `x[0]`) | zero-length vector (useful for generating test data) |
+| Character vector | _If the vector is named_, returns elements whose names match the elements of the character vector used to subset |
+
+### Multiple Elements -- Lists
+
+`[` returns a list, `[[` and `$` pull elements out of a list
+
+### Multiple Elements -- Matrices
+
+Can subset with one vector, multiple vectors, or with a matrix.
+
+By default, `[` simplifies the results to the lowest possible dimensionality
+
+### Multiple Elements -- Dataframes / Tibbles
+
+When using a single index (e.g., `df[1:3]`), behavior is similar to that of lists: all columns are returned. When using multiple indices (e.g., `df[1:3, 2:4]`) specified rows (first index) and specified columns (second index). Note that when only one index is defined but the comma is included (e.g., `df[1:3, ]`), _all_ of the unspecified dimension is returned (i.e., all the columns for only specified rows or vice versa).
+
+Matrix-like subsetting for a single column (`df[, "x"]`) simplifies dataframes by default while the same subset method for tibbles always returns a tibble. The type of the data is unchanged for both dataframes and tibbles when list-subsetting (`df["x"]`) is used.
 
 
-
+### Multiple Elements -- Preserving Dimensionality
 
 ## Selecting a Single Element
 
