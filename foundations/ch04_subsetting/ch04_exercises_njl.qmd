@@ -121,5 +121,34 @@ summary(mod)[["r.squared"]]
 
 ## Applications
 
+1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a1-p1}
+mtcars[sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
+
+[Yes you can permute rows and columns at the same time but it is sort of horrible to look at.]{.answer}
+
+```{r 04-apps-ex_a1-p2}
+mtcars[sample(x = 1:nrow(mtcars), size = nrow(mtcars)), sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
 
 
+2. How would you select a random sample of `m` rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a2}
+m <- 3
+mtcars[sample(x = 1:nrow(mtcars), size = m), ]
+```
+
+3. How could you put the columns in a data frame in alphabetical order?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a3}
+mtcars[order(names(mtcars))]
+```

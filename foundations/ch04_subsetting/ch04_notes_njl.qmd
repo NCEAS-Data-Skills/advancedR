@@ -71,7 +71,68 @@ All subsetting operators can be combined with assignment in a process called "**
 
 ## Applications
 
+### Applications -- Lookup Tables
 
+You can convert abbreviations fairly easily using these subsetting methods.
 
+```{r 04-apps-note_lookups}
+x <- c("m", "f", "u", "f", "f", "m", "m")
+lookup <- c(m = "Male", f = "Female", u = NA)
+lookup[x]
+```
 
+### Applications -- Matching & Merging
 
+The `match()` function allows for integer-based matching.
+
+```{r 04-apps-note_match}
+grades <- c(1, 2, 2, 3, 1)
+
+info <- data.frame( grade = 3:1,
+                    desc = c("Excellent", "Good", "Poor"),
+                    fail = c(F, F, T) )
+
+id <- match(x = grades, table = info$grade)
+id
+```
+
+Note that if you're interesting in joining full tables together you should likely just use the appropriate `<type>_join` function from `dplyr`.
+
+### Applications -- Random Samples & Bootstraps
+
+Combine subsetting with `sample()` to randomly draw a subset of rows from a given dataframe.
+
+### Applications -- Ordering
+
+`order()` accepts a vector and returns how that vector should be re-arranged. It can be combined with `[` to re-order a given vector in the way that `order()` suggests.
+
+`sort()` or `dplyr::arrange()` offer similar functionality without the need to use `[`.
+
+### Applications -- Expanding Aggregated Counts
+
+If you have a dataframe where multiple rows have been collapsed into a single one with a count column, you can un-collapse them with `rep()` and `[`.
+
+```{r 04-apps-note_expand-agg}
+df <- data.frame(x = c(2, 4, 1), y = c(9, 11, 6), n = c(3, 5, 1))
+df
+
+df[rep(x = 1:nrow(df), times = df$n), ]
+```
+
+### Applications -- Removing Columns (from Dataframes)
+
+You can remove columns by assigning `NULL` to the column(s) you don't want or by simply selecting _for_ every other column. You could do this latter option by manually listing all other column names or by using `setdiff()` to identify all other column names flexibly.
+
+### Applications -- Conditional Subsetting (by Row)
+
+Conditional subsetting can be done easily with `[`. See exercises for that section of this chapter.
+
+### Applications -- Boolean Algebra
+
+`which()` allows for easy subsetting because it converts Booleans (e.g., `T`/`F`) to an integer representation.
+
+```{r 04-apps-note_bool-alg}
+x <- 1:6 < 4
+x
+which(x)
+```
