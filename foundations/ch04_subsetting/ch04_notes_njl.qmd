@@ -41,14 +41,29 @@ When using a single index (e.g., `df[1:3]`), behavior is similar to that of list
 
 Matrix-like subsetting for a single column (`df[, "x"]`) simplifies dataframes by default while the same subset method for tibbles always returns a tibble. The type of the data is unchanged for both dataframes and tibbles when list-subsetting (`df["x"]`) is used.
 
-
-### Multiple Elements -- Preserving Dimensionality
-
 ## Selecting a Single Element
 
+While `[` is useful for selecting one or more elements, `[[` and `$` are useful for extracting a single element (`$` is shorthand for `[[`).
 
+### Single Element -- `[[`
 
+Useful train metaphor where `x[1]` grabs the whole first train car while `x[[1]]` grabs the _contents of_ the first train car. So, `[` always returns a list (just of fewer elements) and the type of `[[` is dependent on the type of data in that 'train car'. Note that while `[` can extract any number of 'train cars', `[[` **can only be used to extract a single element**.
 
+### Single Element -- `$`
+
+`x$y` is roughly equivalent to `x[["y"]]`. Often this is used to grab a single column in a dataframe. Key difference is that `$` does partial string matching for element names (i.e., `x$a` will return the contents of column `aa` if there is no column `a`.). You can change your global options to trigger a warning on this change (`options(warnPartialMatchDollar = TRUE)`) or you could use tibbles which don't support this sort of partial match.
+
+### Single Element -- Invalid Indices
+
+| `row[[col]]` | Zero-length | OOB (int) | OOB (chr) | Missing |
+|:---:|:---:|:---:|:---:|:---:|
+| Atomic | _Error_ | _Error_ | _Error_ | _Error_ |
+| List | _Error_ | _Error_ | `NULL` | `NULL` |
+| `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
+
+### Single Element -- `@` and `slot()`
+
+S4 objects also support the `@` operator (equivalent to `$`) and the `slot()` function (equivalent to `[[`). Note that `@` is more restrictive in that it will always return an error when the specified index does not exist.
 
 ## Subsetting & Assignment
 

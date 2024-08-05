@@ -6,6 +6,15 @@ engine: knitr
 code-overflow: wrap
 ---
 
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
 ```{scss custom-themes, echo=FALSE}
 .answer { 
   color: #560bad;
@@ -81,8 +90,34 @@ df
 
 ## Selecting a Single Element
 
+1. Brainstorm as many ways as possible to extract the third value from the cyl variable in the mtcars dataset.
 
+[See below]{.answer}
 
+```{r 04-single-ex_a1}
+mtcars$cyl[3]
+mtcars[["cyl"]][3]
+mtcars[3, 2]
+purrr::pluck(.x = mtcars, "cyl", 3)
+purrr::pluck(.x = mtcars, 2, 3)
+purrr::chuck(.x = mtcars, "cyl", 3)
+purrr::chuck(.x = mtcars, 2, 3)
+mtcars[c(-1:-2, -4:-32), c(-1, -3:-11)] # >:)
+```
+
+2. Given a linear model, (e.g., `mod <- lm(mpg ~ wt, data = mtcars)`), extract the residual degrees of freedom. Then extract the R squared from the model summary (`summary(mod)`)
+
+[See below]{.answer}
+
+```{r 04-single-ex_a2}
+mod <- lm(mpg ~ wt, data = mtcars)
+
+mod$df.residual
+mod[["df.residual"]]
+
+summary(mod)$r.squared
+summary(mod)[["r.squared"]]
+```
 
 ## Applications
 
