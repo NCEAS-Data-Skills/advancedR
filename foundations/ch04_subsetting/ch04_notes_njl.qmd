@@ -67,7 +67,7 @@ S4 objects also support the `@` operator (equivalent to `$`) and the `slot()` fu
 
 ## Subsetting & Assignment
 
-
+All subsetting operators can be combined with assignment in a process called "**subassignment**". The basic syntax is `x[i] <- value`. For lists, `x[[i]] <- NULL` can be used to _remove_ a list element. To instead add a literal `NULL` element you'd use `x[i] <- list(NULL)`.
 
 ## Applications
 
