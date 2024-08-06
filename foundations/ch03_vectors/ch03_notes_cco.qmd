@@ -8,8 +8,6 @@ editor: source
 ---
 
 ```{r setup}
-library(lobstr)
-library(bench)
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -18,4 +16,223 @@ library(bench)
   font-weight: bolder;
 }
 ```
+
+## 3.2 Atomic vectors
+
+* Logical
+* Integer
+* Double
+* Character
+* rare: complex
+* rare: raw
+
+### 3.2.4 Testing and coercion
+
+Use `is.logical()`, `is.integer()`, `is.double()`, `is.character()` - does as promised.  But these are trickier so avoid:
+
+* `is.vector()`: From documentation: `is.vector(x)` returns `TRUE` if `x` is a vector of the specified mode having no attributes other than names. If `mode = "any"`, `is.vector` may return `TRUE` for the atomic modes, `list` and `expression.` For any mode, it will return `FALSE` if `x` has any attributes except names. (still, looks like it is not entirely off track?)
+* `is.atomic()`: `is.atomic` is true for the atomic types, but there are other atomic types that are not vectors, so `is.atomic` is not the same as `is.vector()`.  Again, not entirely off base, but more complicated than perhaps seems.
+* `is.numeric()`:  While `as.numeric()` is identical to `as.double()`, and `numeric` in R is generally a synonym for `double`, `is.numeric()` is not identical to `is.double()` and returns `TRUE` for EITHER `double` or `integer` objects (but not for date/time objects or factors)
+
+If you combine different types (e.g., `c(1, 3.14, 'pi')`) you'll get the most general/most flexible (i.e., `character` > `double` > `integer` > `logical`).  This also happens with most math functions, e.g., `+`, or `log()` or `abs()`.
+
+### 3.2.5 exercises
+
+1. How do you create `raw` and `complex` scalars?
+
+> [`complex` can be created directly such as `x <- 3 + 3i`, or using `as.complex()` such as `y <- as.complex(5)` returns `5+0i`.  `raw` can be created using `as.raw()`, e.g., `as.raw(12)` returns `0c` hexadecimal.]{.answer}
+
+2. Test your knowledge of the vector coercion rules by predicting the output of the following uses of `c()`:
+
+```{r}
+c(1, FALSE) ### 1, 0 --> FALSE coerced to numeric
+c("a", 1)   ### 'a', '1' --> 1 coerced to character
+c(TRUE, 1L) ### 1, 1 --> TRUE coerced to integer
+```
+3. Why is `1 == "1"` true? Why is `-1 < FALSE` true? Why is `"one" < 2` false?
+
+> [`1 == "1"`: the `==` coerces all bits to character (to match `'1'`) I suppose?  So it becomes `'1' == '1'`.  As does `<` for `-1 < FALSE`: `-1 < 0` since false is coerced to numeric.  For `"one" < 2`, the 2 is coerced to character, and then `'one' < '2'` is false because numbers come before letters alphabetically. If we'd used `identical()` instead, these would all be `FALSE`.]{.answer}
+
+4. Why is the default missing value, `NA`, a logical vector? What’s special about logical vectors? (Hint: think about `c(FALSE, NA_character_)`.)
+
+>[When combined with any other type, a logical vector is coerced to that other type, being the least flexible type.  If `NA` were an double, then if you had `c(1L, NA)` then the integer would be coerced to double to match; if it were character, then the integer would be coerced to character.  But since it's logical, then the NA is what gets coerced, in this case to `NA_integer_`.]{.answer}
+
+5. Precisely what do `is.atomic()`, `is.numeric()`, and `is.vector()` test for?
+
+>[See above.  Note, when I try `is.atomic(NULL)` I get FALSE, not TRUE as the answer doc suggests... maybe a change?]
+
+## 3.3 Attributes
+
+Get and set attributes with `attr()`: name-value pairs that add metadata to an object
+
+```{r}
+x <- 1:3
+
+attr(x, 'a') <- 'value for attribute a'
+attr(x, 'b') <- c('vector', 'of', 'values')
+
+attr(x, 'a')
+attributes(x)
+str(attributes(x))
+```
+
+Attributes are ephemeral and usually lost during most operations
+```{r}
+attributes(sum(x))
+```
+
+Special attributes: names (for named vectors) and dim (to turn a vector into a matrix or array)
+
+### 3.2.2 Names
+
+This I pretty much already know...
+
+### 3.2.3 Dimensions
+
+Also pretty easy.  One thing to keep in mind is that (by default) values passed to a matrix are filled into columns, e.g., `matrix(1:6, nrow = 3, ncol = 2)` becomes 
+
+```
+     [,1] [,2]
+[1,]    1    4
+[2,]    2    5
+[3,]    3    6
+```
+
+but this can be overwritten with the `byrow` argument, i.e., `byrow = TRUE`.
+
+### 3.2.4 Exercises
+
+1. How is `setNames()` implemented? How is `unname()` implemented? Read the source code.
+
+> [first guess: `setNames()` is implemented like: setNames <- function(x, n) {attr(x, 'names') <- n}.  NOPE! easier: function(object, nm) {names(object) <- nm}.  `unname()` then is probably: function(object) {names(object) <- NULL}.  CLOSE! but additional stuff for multiple dimensions and to exclude dataframes.]{.answer}
+
+2. What does `dim()` return when applied to a 1-dimensional vector? When might you use `NROW()` or `NCOL()`?
+
+>[`dim()` on a 1-dimensional *vector* would be NULL, since dimensions are attributes of matrices and arrays.  `NROW()` and `NCOL()` are for matrices and arrays.  Why `NROW` vs. `nrow`? aha, NROW and NCOL will treat an R vector like a vertical math vector, i.e., NROW(1:5) and NCOL(1:5) return 5 and 1, which is different from nrow, which returns NULL.]{.answer}
+
+3. How would you describe the following three objects? What makes them different from 1:5?
+
+```{r}
+x1 <- array(1:5, c(1, 1, 5))
+x2 <- array(1:5, c(1, 5, 1))
+x3 <- array(1:5, c(5, 1, 1))
+```
+
+>[1:5 is a vector, technically with no dimensions; the first line is an array with 1 row, 1 column, and 5 layers/pages/whatever.  The second is one row, 5 columns, 1 layer; the third is 5 rows, 1 column 1 layer.]{.answer}
+
+4. An early draft used this code to illustrate `structure()`:
+
+```{r}
+structure(1:5, comment = "my attribute")
+#> [1] 1 2 3 4 5
+```
+
+But when you print that object you don’t see the comment attribute. Why? Is the attribute missing, or is there something else special about it? (Hint: try using help.)
+ 
+>[`structure()` attaches attributes to an object; here, it attaches a `comment` attribute but that's a special non-printing attribute. For example, `x <- structure(1:5, comment = 'TEST'); comment(x); attr(x, 'comment'); attributes(x)` will show the comment in different ways.]{.answer}
+
+## 3.4 S3 atomic vectors
+
+Aha, having a "class" attribute turns an object into an S3 object, meaning it behaves differently when passed to a generic function (e.g., why dates might print differently from a standard vector).  Turns out a `factor` is a S3 vector that relates to `integer`s; `POSIXct` and `Date` (and date-times and durations) are S3 vectors that relate to `double`.
+
+### 3.4.1 factors
+
+factor is an `integer` with attributes of `class` ("factor") and `levels`, defining the allowed values.
+
+### 3.4.2 Dates
+
+Dates are built on `double` vectors and just have the attribute `class` ("Date") and no other attributes.  This is the number of days since 1970-01-01.
+
+### 3.4.3 Date-times
+
+Similar to Date - but built on the number of seconds since 1970-01-01, and attributes of `class` and `tzone`.  The time zone doesn't change the instant of time, just how it is formatted...
+
+```{r}
+as.numeric(as.POSIXct("1970-01-01 22:00", tz = "UTC"))
+# seconds since Jan 1 1970
+
+now_ct <- as.POSIXct("2018-08-01 22:00", tz = "UTC")
+now_ct
+#> [1] "2018-08-01 22:00:00 UTC"
+
+structure(now_ct, tzone = "Asia/Tokyo")
+#> [1] "2018-08-02 07:00:00 JST"
+structure(now_ct, tzone = "America/New_York")
+#> [1] "2018-08-01 18:00:00 EDT"
+structure(now_ct, tzone = "Australia/Lord_Howe")
+#> [1] "2018-08-02 08:30:00 +1030"
+structure(now_ct, tzone = "Europe/Paris")
+#> [1] "2018-08-02 CEST"
+```
+
+### 3.4.4 Durations
+
+Amount of time between pairs of dates or date-times, as difftime.  difftime built on double, with attributes of `class` ("difftime") and `units`
+
+```{r}
+one_week_1 <- as.difftime(1, units = "weeks")
+one_week_1
+#> Time difference of 1 weeks
+
+typeof(one_week_1)
+#> [1] "double"
+attributes(one_week_1)
+#> $class
+#> [1] "difftime"
+#> 
+#> $units
+#> [1] "weeks"
+
+one_week_2 <- as.difftime(7, units = "days")
+one_week_2
+#> Time difference of 7 days
+
+typeof(one_week_2)
+#> [1] "double"
+attributes(one_week_2)
+#> $class
+#> [1] "difftime"
+#> 
+#> $units
+#> [1] "days"
+```
+
+### 3.4.5 Exercises
+
+1. What sort of object does `table()` return? What is its type? What attributes does it have? How does the dimensionality change as you tabulate more variables?
+
+> [Guessing an array, with attributes of class and dims.  As you tabulate more variables, the dims variable changes.]{.answer}
+
+```{r}
+x <- sample(letters[1:5], size = 100, replace = TRUE)
+table(x)
+attributes(table(x))
+
+z <- data.frame(x, y = sample(x, 100))
+table(z)
+attributes(table(z))
+```
+
+> [aha, also has a dimnames attribute!]{.answer}
+
+2. What happens to a factor when you modify its levels?
+
+```{r}
+f1 <- factor(letters)
+levels(f1) <- rev(levels(f1))
+```
+
+> [The vector is still an integer, in this case from 1:26; but previously f1[1] had been associated with 'a' and now it is associated with 'z'... this seems dangerous to modify the levels directly!]{.answer}
+
+3. What does this code do? How do f2 and f3 differ from f1?
+
+```{r}
+f2 <- rev(factor(letters)); f2[1]; as.integer(f2[1])
+
+f3 <- factor(letters, levels = rev(letters)); f3[1]; as.integer(f3[1])
+```
+> [`f2` creates a `factor(letters)` in order `a:z` and then just flips its order, so the last element (`z`) is now in the first position.  Levels are still in alphabetical order, so `z` is still assigned to level 26.  ` f3` creates a vector of letters, in order `a:z`, but assigns the levels in reverse alphabetical, so element 1 contains `a` but would be represented by the integer 26 (the last level).]{.answer}
+
+## 3.5 Lists
+
 
