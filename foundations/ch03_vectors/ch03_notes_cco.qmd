@@ -5,9 +5,13 @@ format:
   html:
     embed-resources: true
 editor: source
+execute:
+  message: false
+  warning: false
 ---
 
 ```{r setup}
+library(tidyverse)
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -59,7 +63,7 @@ c(TRUE, 1L) ### 1, 1 --> TRUE coerced to integer
 
 5. Precisely what do `is.atomic()`, `is.numeric()`, and `is.vector()` test for?
 
->[See above.  Note, when I try `is.atomic(NULL)` I get FALSE, not TRUE as the answer doc suggests... maybe a change?]
+>[See above.  Note, when I try `is.atomic(NULL)` I get FALSE, not TRUE as the answer doc suggests... maybe a change?]{.answer}
 
 ## 3.3 Attributes
 
@@ -235,4 +239,221 @@ f3 <- factor(letters, levels = rev(letters)); f3[1]; as.integer(f3[1])
 
 ## 3.5 Lists
 
+Each element can be any type, not just vectors, and not necessarily the same type or length or anything.  Technically, all elements are pointers/references, but still...
 
+`c()` will combine several lists into one; if `c(<list thing>, <vector thing>)` the vector will be coerced into a list then combined.
+
+List --> atomic vector with `unlist()` but the rules for the resulting type are complicated and not well documented...
+
+### 3.5.3 Matrices and arrays
+
+You can add a dimension attribute to lists, just like vectors, to create list-matrices or list-arrays.
+
+```{r}
+l <- list(1:3, "a", TRUE, 1.0)
+dim(l) <- c(2, 2)
+l
+#>      [,1]      [,2]
+#> [1,] Integer,3 TRUE
+#> [2,] "a"       1
+
+l[[1, 1]]
+#> [1] 1 2 3
+```
+
+### 3.5.4 Exercises
+
+1. List all the ways that a list differs from an atomic vector.
+
+>[a) can contain multiple types.  b) can contain lists (recursive).  c) subsetting rules are different]{.answer?}
+
+2. Why do you need to use `unlist()` to convert a list to an atomic vector? Why doesn’t `as.vector()` work?
+
+>[A list is already a vector (e.g., `is.vector(list())` returns `TRUE`).  It is not an atomic vector though.  `unlist()` will create a vector of all the list elements strung together, coerced as necessary (e.g., `unlist(list(1:3, 3.14, letters[4:6]))` will coerce to character (for the letters).)]{.answer}
+
+3. Compare and contrast `c()` and `unlist()` when combining a date and date-time into a single vector.
+
+```{r}
+d <- as.Date('2024-08-06')
+dt <- as.POSIXct('2024-08-06 00:00:00')
+
+ddt <- c(d, dt); class(ddt)
+ddt_l <- list(d, dt); unlist(ddt_l)
+```
+
+>[The key goes into a lot of complexity on this - both date and date-times are stored as `double` with a `class` attribute (`Date` or `POSIXct`) that helps R interpret the double values correctly.  `c()` coerces based on the first element in this case; unlist loses the attribute values so really screws it all up.  Perhaps just use `lubridate` instead!]{.answer}
+
+## 3.6 Data frames and tibbles
+
+Data frame: named list of vectors with attributes for column `names`, `row.names` (sometimes) and `class` (i.e., `data.frame`).  Unlike a generic list, the vector elements of a data frame must all be the same length (if not necessarily the same type).
+
+Tibbles are a reimagining of data frames to avoid some of the challenges of the old school data frames.  Tibbles are "lazy and surly": they do less and complain more.  Same structure as a data frame except the class vector includes `tbl_df`, `tbl`, along with `data.frame`.
+
+### 3.6.1 Creating
+
+DON'T FORGET that the `data.frame()` function defaults to interpreting character strings as factors... use `stringsAsFactors = FALSE` to avoid this.  The tibble() creation function does not do any coercion (i.e., lazy).
+
+Data frames auto transform non-syntactic names unless `check.names = FALSE`.  Tibbles don't transform non-syntactic names.
+
+As for data frames, tibble columns must all be vectors of the same length.  Data frames recycle shorter inputs (that are integer fraction of the longest column), but tibbles only recycle inputs of length one.
+
+```{r, eval = FALSE}
+data.frame(x = 1:6,
+           y = letters[1:3]) ### integer fraction; wouldn't work for letters[1:4]
+
+dplyr::tibble(x = 1:6,
+              y = letters[1:3])
+# Error in `dplyr::tibble()`:
+# ! Tibble columns must have compatible sizes.
+# ℹ Only values of size one are recycled.
+```
+
+Interesting: `tibble()` allows you to refer to other variables created during the construction (`data.frame()` can't do that!)
+
+```{r}
+tibble(x = 1:4, y = x^2)
+```
+
+### 3.6.2 Row names
+
+The `row.names` attribute lets you set names for rows of a data frame (NOT tibbles - see below), must be unique, and can subset on them.  Get and set row names with `rownames()` (or `row.names()`?)
+
+```{r}
+df <- data.frame(x = 1:4, 
+                 y = 2:5,
+                 row.names = letters[3:6])
+rownames(df)
+df['d', ]
+```
+
+***BUT:*** rownames are undesirable!
+
+* metadata shouldn't be stored differently from the rest of the data!
+* they only work for subsetting when a row can be identified by a single string - not useful for more meaningful/complex subsetting!
+* since rownames must be unique, if any rows are duplicated (e.g., resampling or multi-match joins) it creates new row names - unhelpful!
+
+Because of these reasons, tibbles don't allow row names (but see `rownames_to_column()` or the `rownames` argument in `as_tibble()` which allows you to assign a column name where the rownames are stored)
+
+### 3.6.3 Printing
+
+Tibbles print nicely (truncated to 10 rows, types labeled, long column values truncated, ...)
+
+### 3.6.4 Subsetting
+
+You can subset a dataframe or tibble like a 1-d structure, where it behaves like a list (why `sapply(df, class)` works to reveal column classes) or a 2-d structure, where it behaves like a matrix.
+
+Data frame problems: 
+
+* subsetting columns with `df[ , vars]` returns a vector if `vars` is only one variable, or a dataframe of `vars` is multiple variables.
+* If `df$x` and there's no column `x`, but a column starting with `x` (`xavier` for example), then it will select `xavier` (without warning).  If `df$z` and no column `z` (or matchable), returns `NULL` (without warning that `z` doesn't exist!)
+
+```{r}
+df <- data.frame(y = 1:3, xavier = 4:6)
+df$x
+df$z
+```
+
+Tibbles:
+
+* `[` always returns a tibble
+* `$` doesn't do partial matching, and warns if it can't find a variable (surly).
+
+### 3.6.5 Testing and coercing
+
+`is.data.frame()` returns `TRUE` for tibbles and data.frames.  If it is important that it's a tibble, use `is_tibble()`.  Coerce with `as.data.frame()` or `as_tibble()`.
+
+### 3.6.6 List columns
+
+A data frame is a list of vectors, so it can have a column that is a list (which is a vector).  So you can put any object in a data frame!
+
+List columns allowed in data frames but hard to create - either add it after creation or wrap the list in `I()`:
+```{r}
+df <- data.frame(x = 1:3)
+df$y = list(1:2, 1:3, 1:4)
+df
+
+data.frame(
+  x = 1:3,
+  y = I(list(3:4, 2:4, 1:4)) 
+  ### I(): AsIs - treat the object as is, i.e., inhibit coercion
+)
+```
+
+Easier to have list columns in tibble - include directly in `tibble()` and they print nicely.
+
+```{r}
+tibble(
+  x = 1:3,
+  y = list(5:6, 4:6, 3:6)
+)
+```
+
+### 3.6.7 Matrix and data frame columns
+
+You can also have matrices and arrays as columns in a data frame - as long as the number of rows matches up.  For data frames, add after creation or wrap in `I()`.
+
+```{r}
+dfm <- data.frame(x = 1:3 * 10) ### 3 rows
+dfm$y <- matrix(1:9, nrow = 3)  ### 3 rows
+dfm$z <- data.frame(a = 3:1, b = letters[1:3], stringsAsFactors = FALSE)
+
+str(dfm)
+```
+
+Matrix and data frame columns might screw up some functions that assume every column is a vector.
+
+### 3.6.8 Exercises
+
+1. Can you have a data frame with zero rows? What about zero columns?
+
+>[Yes to zero rows.  Yes to zero columns.]{.answer}
+
+```{r}
+empty_df <- data.frame()
+empty_df
+# data frame with 0 columns and 0 rows
+```
+
+2. What happens if you attempt to set rownames that are not unique?
+
+>[R gives an error.]{.answer}
+
+3. If `df` is a data frame, what can you say about `t(df)`, and `t(t(df))`? Perform some experiments, making sure to try different column types.
+
+>[I assume that transposing a data frame with different column types would result in coercion of all data to the most permissive type, since at least one row now has values of that type, and so every column does as well.  Transposing again would presumably keep the coerced type.  Verified below:]{.answer}
+
+```{r}
+df <- data.frame(x = 1:4, y = 4:7, z = letters[c(5, 5, 6, 7)], stringsAsFactors = FALSE)
+t(df)
+t(t(df))
+```
+
+4. What does `as.matrix()` do when applied to a data frame with columns of different types? How does it differ from `data.matrix()`?
+
+>[Presumably `as.matrix()` would force coercion to the most permissive type among all columns (verified below).  As seen below, `data.matrix()` seems to coerce characters to factors (see stringsAsFactors setting above) and then coerce the factor to integers.  This is documented in `?data.matrix` as well.]{.answer}
+
+```{r}
+as.matrix(df)
+data.matrix(df)
+```
+
+## 3.7 `NULL`
+
+`NULL` is closely related to vectors; has a unique type, is always length zero, and cannot have attributes.
+
+```{r}
+typeof(NULL)
+length(NULL)
+```
+
+```{r eval = FALSE}
+x <- NULL
+attr(x, 'thing') <- 'value'
+# Error in `attr(x, "thing") <- "value"`:
+# ! attempt to set an attribute on NULL
+```
+
+Two common uses: 
+
+* represent an empty vector
+* represent an absent vector - this is common as a default function argument.  Contrast with `NA` which means an *element* of a vector is absent, while `NULL` means the entire vector is absent.
