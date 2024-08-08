@@ -4,26 +4,57 @@ format: html
 editor: visual
 ---
 
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+```
+
 ## 2.2 Binding Basics
 
-- R binds names to objects; so two "names" can point to the same object
-- names have values, the object itself doesn't have a name per se
-- when naming, if using non-syntactic names you need to use backticks (``) rather
-than quotes or else you have to retrieve names in different ways
+-   R binds names to objects; so two "names" can point to the same object
+-   names have values, the object itself doesn't have a name per se
+-   when naming, if using non-syntactic names you need to use backticks (\`\`) rather than quotes or else you have to retrieve names in different ways
 
-### Exercises 
+### Exercises
 
-1. Explain the relationship between `a`, `b`, `c` and `d` in the following code:
+1.  Explain the relationship between `a`, `b`, `c` and `d` in the following code:
 
 ```{r ex_2.2.1}
+
 a <- 1:10
 b <- a
 c <- b
 d <- 1:10
 
+# no modifications or copies made to `a` from previous code
+# check the object identifier with lobstr::obj_addr()
+v <- list(a, b, c, d)
+
+lobstr::obj_addr(a)
+lobstr::obj_addr(b)
+lobstr::obj_addr(c)
+lobstr::obj_addr(d)
+
+purrr::map(v, lobstr::obj_addr)
+
+lobstr::ref(v)
 ```
 
-1. The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
+[Objects `a`, `b`, and `c` all point to the same object, but object `d` points to a different object. ]{.answer}
+
+[Why do I see different answers when I create a list that points to each object?]{.question}
+
+[Not sure why still, but using `lobstr::ref` may be necessary for lists]{.answer}
+
+2.  The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
 
 ```{r}
 lobstr::obj_addr(mean)
@@ -33,40 +64,42 @@ lobstr::obj_addr(evalq(mean))
 lobstr::obj_addr(match.fun("mean"))
 ```
 
-Ok, yes they do! Interesting that there are so many ways to access the function.
+[Ok, yes they do! Interesting that there are so many ways to access the function.]{.answer}
 
-1. By default, base R data import functions, like read.csv(), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+3.  By default, base R data import functions, like read.csv(), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
 
-you may not know how to access the names? if people are using different read in functions 
-that could lead to difficulties working on the same dataset?
+[you may not know how to access the names? if people are using different read in functions that could lead to difficulties working on the same dataset?]{.answer}
+[option `check.names = FALSE` will suppress this behavior]{.answer}
 
-1. What rules does make.names() use to convert non-syntactic names into syntactic ones?
+4.  What rules does make.names() use to convert non-syntactic names into syntactic ones?
 
-1. I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+[adds an "X" to the beginning of the name (if necessary) and turns all invalid characters into "."]{.answer}
 
+5.  I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+
+[names can start with a dot but not if they are followed by a number]{.answer}
 
 ## 2.3 Copy on Modify
 
 ### Notes
 
-- woah, lists seem complicated
+-   apparently this will "radically improve my intuition about the performance of R code"
 
-- names point to the same object until that object is modified, at which point
-a copy is made
+-   woah, lists seem complicated
 
-- how the copy is made depends on the object type - lists that are modified do not 
-copy un-modified list items, they still point to the original list objects 
+-   names point to the same object until that object is modified, at which point a copy is made
 
-- data.frames will only copy columns that need to be modified, but point to unchanged 
-columns in the original object
+-   how the copy is made depends on the object type - lists that are modified do not copy un-modified list items, they still point to the original list objects
 
-- changing rows copies the entire data frame
+-   data.frames will only copy columns that need to be modified, but point to unchanged columns in the original object
+
+-   changing rows copies the entire data frame
 
 ### Exercises
 
-1. Why is tracemem(1:10) not useful?
+1.  Why is tracemem(1:10) not useful?
 
-1. Explain why tracemem() shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
+2.  Explain why tracemem() shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
 
 ```{r}
 x <- c(1L, 2L, 3L)
@@ -75,7 +108,4 @@ x
 x[[3]] <- 4
 ```
 
-It seems like maybe it creates two copies because first it has to change the 
-vector type (integer to numeric) and then modify the value
-
-
+It seems like maybe it creates two copies because first it has to change the vector type (integer to numeric) and then modify the value
