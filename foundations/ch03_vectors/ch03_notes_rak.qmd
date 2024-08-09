@@ -1,0 +1,79 @@
+---
+title: "Notes and Exercises for Ch. 3"
+format: html
+---
+
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+
+## 3.2 Atomic Vectors
+
+### Notes
+
+- 4 primary types of atomic vectors: numeric (integer and double); logical; character
+
+- when creating longer vectors, if the input is an atomic vector R will always create another atomci vector ("flattens")
+
+- there are actually 4 "missing values" (NA), one for each atomic type, but they are automatically coerced into 
+the correct type
+
+- avoid using `is.vector()`, `is.numeric` and `is.atomic` as they don't do what you think they do
+
+    - seems a bit opaque 
+
+- when combining vectors of differenct types they will be coerced in the following order:
+
+    - character --> double --> integer --> logical
+
+
+### Exercises
+
+1. How do you create raw and complex scalars? (See ?raw and ?complex.)
+
+[You can use `raw()` or `as.raw()` or `charToRaw()` for raw scalars, and by including `i` in a vector or using `complex`]{.answer}
+
+2. Test your knowledge of the vector coercion rules by predicting the output of the following uses of c():
+
+```{r}
+c(1, FALSE)
+c("a", 1)
+c(TRUE, 1L)
+```
+
+[first line: double]{.answer}
+[second line: character]{.answer}
+[third line: integer]{.answer}
+
+3. Why is 1 == "1" true? Why is -1 < FALSE true? Why is "one" < 2 false?
+
+[Because of coercion - in the first example, the double is coerced to character, and `"1" == "1"` is `TRUE`]{.answer}
+[`FALSE` is coerced to `0`, and `-1 < 0` is `TRUE`]{.answer}
+[`2` is coerced to `"2"` and `"one" < "2"` is `FALSE`]{.answer}
+
+4. Why is the default missing value, NA, a logical vector? What’s special about logical vectors? (Hint: think about c(FALSE, NA_character_).)
+
+[because it will be coerced to other vector types as needed?]{.answer}
+
+5. Precisely what do is.atomic(), is.numeric(), and is.vector() test for?
+
+[`is.atomic()` tests for: ]{.todo}
+[`is.numeric()` tests for: ]{.todo}
+[`is.vector()` tests for: ]{.todo}
+
+## 3.3 Attributes
