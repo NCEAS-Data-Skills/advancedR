@@ -10,9 +10,19 @@
 
 - discuss potential output products (revisit ones from first meeting, talk about any new ideas)
 
+    - Rachel can show demo of the `glossary` extension
+
 ## Notes
 
 ### Products
 
 - create a glossary of key terms from each chapter? potentially use this [extension](https://github.com/andrewpbray/glossary) 
 
+    - we can create distinct classes for different types of notes (e.g. definitions, 
+    key concepts, key functions) and then create different "glossaries" for each
+    type of note we want to track 
+    
+    - we can modify the `contributions.md` file with guidelines for how to add to
+    the glossary
+    
+    
