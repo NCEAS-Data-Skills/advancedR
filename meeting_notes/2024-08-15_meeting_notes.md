@@ -8,9 +8,13 @@
 
 - review yaml and other cool code formatting tidbits from people's code
 
+    - commit message shorthands? 
+
 - discuss potential output products (revisit ones from first meeting, talk about any new ideas)
 
     - Rachel can show demo of the `glossary` extension
+    
+    
 
 ## Notes
 
