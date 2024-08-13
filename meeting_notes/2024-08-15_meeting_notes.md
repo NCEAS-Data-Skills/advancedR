@@ -29,4 +29,6 @@
     - we can modify the `contributions.md` file with guidelines for how to add to
     the glossary
     
+    - we could also spend some time of our group meetings deciding on key concepts and write them in the meeting notes, rather than our own individual notes, to streamline a bit. 
+    
     
