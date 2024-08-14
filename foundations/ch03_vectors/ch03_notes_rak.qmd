@@ -1,0 +1,360 @@
+---
+title: "Notes and Exercises for Ch. 3"
+format: 
+  html:
+    toc: true
+    theme: yeti
+---
+
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+
+## 3.2 Atomic Vectors
+
+### Notes
+
+- 4 primary types of atomic vectors: numeric (integer and double); logical; character
+
+- when creating longer vectors, if the input is an atomic vector R will always create another atomci vector ("flattens")
+
+- there are actually 4 "missing values" (NA), one for each atomic type, but they are automatically coerced into 
+the correct type
+
+- avoid using `is.vector()`, `is.numeric` and `is.atomic` as they don't do what you think they do
+
+    - seems a bit opaque 
+
+- when combining vectors of differenct types they will be coerced in the following order:
+
+    - character --> double --> integer --> logical
+
+
+### Exercises
+
+1. How do you create raw and complex scalars? (See ?raw and ?complex.)
+
+[You can use `raw()` or `as.raw()` or `charToRaw()` for raw scalars, and by including `i` in a vector or using `complex`]{.answer}
+
+2. Test your knowledge of the vector coercion rules by predicting the output of the following uses of c():
+
+```{r}
+c(1, FALSE)
+c("a", 1)
+c(TRUE, 1L)
+```
+
+[first line: double]{.answer}
+[second line: character]{.answer}
+[third line: integer]{.answer}
+
+3. Why is 1 == "1" true? Why is -1 < FALSE true? Why is "one" < 2 false?
+
+[Because of coercion - in the first example, the double is coerced to character, and `"1" == "1"` is `TRUE`]{.answer}
+[`FALSE` is coerced to `0`, and `-1 < 0` is `TRUE`]{.answer}
+[`2` is coerced to `"2"` and `"one" < "2"` is `FALSE`]{.answer}
+
+4. Why is the default missing value, NA, a logical vector? What’s special about logical vectors? (Hint: think about c(FALSE, NA_character_).)
+
+[because it will be coerced to other vector types as needed?]{.answer}
+
+5. Precisely what do is.atomic(), is.numeric(), and is.vector() test for?
+
+[`is.atomic()` tests for whether an object is one of the atomic types (logical, integer, etc.)]{.answer}
+[`is.numeric()` tests for whether an object has the base type *double* or *integer*, will return false for dates]{.answer}
+[`is.vector()` tests for whether a vector is of the specified mode (atomic types or "list" or "espressoin" or "any"; a list or expression will return true for some of the modes. A vector can also only have "name" attributes or it will return false)]{.answer}
+
+## 3.3 Attributes
+
+### Notes
+
+- matrices, arrays, factors, date-times build on atomic vectors by adding attributes (aside from names)
+
+- attributes are name-value pairs 
+
+    - set or retrieve individual attributes with `attr()`
+    
+    - retrieve en masse with `attributes()` 
+    
+    - set en masse with `structure()`
+    
+- think of attributes as ephemeral as most operations remove attributes
+
+    - except name and dim (dimensions)
+    
+    - need to create your own S3 class to preserve other attributes 
+    
+- 3 ways to name a vector - when creating it, via `names()`, and with `setNames()`
+
+- remove names with `x <- unname(x)` or `names(x) <- NULL`
+
+### Exercises
+
+1. How is `setNames()` implemented? How is `unname()` implemented? Read the source code.
+
+[`setNames` is implemented using the `names(x) <- x` syntax, and so is `unname` except it also has a method for dealing with an object with dimensions.]{.answer}
+
+2. What does `dim()` return when applied to a 1-dimensional vector? When might you use `NROW()` or `NCOL()`?
+
+```{r}
+
+x <- c(1:10)
+dim(x)
+
+```
+[It returns `NULL`. You would use `nrow` or `ncol` for a matrix (or data.frame).]{.answer}
+
+3. How would you describe the following three objects? What makes them different from 1:5?
+
+```{r}
+x1 <- array(1:5, c(1, 1, 5))
+x2 <- array(1:5, c(1, 5, 1))
+x3 <- array(1:5, c(5, 1, 1))
+
+lapply(list(x1, x2, x3), str)
+
+```
+
+[They are arrays of varying dimension length but have three dimensions. They have dimensions.]
+
+4. An early draft used this code to illustrate structure():
+
+```{r}
+structure(1:5, comment = "my attribute")
+
+
+#> [1] 1 2 3 4 5
+```
+
+But when you print that object you don’t see the comment attribute. Why? Is the attribute missing, or is there something else special about it? (Hint: try using help.)
+
+[`comment` is a special attribute and is not printed by the default methods.]{.answer}
+
+## 3.4 S3 atomic vectors
+
+### Notes
+
+
+:::{.definition}
+**S3 object**
+
+S3 objects have a `class` attribute and will behave differently from vectors when passed to a 
+generic function. These are built off of a base type and usually have other attributes to store information.
+:::
+
+
+- a `factor` is built on top of the `integer` type, with attributes `levels` and `class`, even though they look like character vectors (and can behave like them)
+
+- often factors are automatically created from character vectors from certain base R functions, 
+which is not usually optimal (so suppress with `stringsAsFactors = FALSE`)
+
+- manually coerce factors to strings if you need them to behave like strings to avoid
+unexpected behaviors
+
+- Dates are built on top of `double` vector type with a class and no other attributes
+
+- Date-times are usually POSIXct class build on `double` type with two attributes (class, tzone)
+
+- duration are stored in `difftimes`, built on top of `double` with a `units` attribute to 
+determine how integer should be interpreted
+
+### Exercises
+
+1. What sort of object does `table()` return? What is its type? What attributes does it have? How does the dimensionality change as you tabulate more variables?
+
+[`table()` returns a contingency table of class `table` which is an array of integer values, the result is always an `array` a 1D array if one factor is given. The number of dimensions will increase?]{.answer}
+
+2. What happens to a factor when you modify its levels?
+
+```{r}
+f1 <- factor(letters)
+
+f1
+
+levels(f1) <- rev(levels(f1))
+
+f1
+```
+
+[the underlying data doesn't change, but the order of the levels might]{.answer}
+
+3. What does this code do? How do f2 and f3 differ from f1?
+
+```{r}
+
+f2 <- rev(factor(letters))
+
+f1
+f2
+
+f3 <- factor(letters, levels = rev(letters))
+
+f3
+```
+
+[`f1` reversed both the data and the factor levels, while `f2` only reversed the data and `f3` only reversed the factor levels. ]{.answer}
+
+## 3.5 Lists
+
+### Notes
+
+:::{.concept}
+**lists**
+
+- each element of a list is actually the same type because it is a *reference* to another object
+:::
+
+- combining lists with `list` vs. `c()` can result in different structures of the list
+
+- you can have list-matrices and list-arrays by adding dimensions attribute, but these are a bit weird
+
+### Exercises
+
+1. List all the ways that a list differs from an atomic vector.
+
+[lists can have multiple types of objects while atomic vectors can only have one type; 
+lists can contain lists (recursives); lists are references to objects, and so take less memory than expected sometimes]{.answer}
+
+2. Why do you need to use `unlist()` to convert a list to an atomic vector? Why doesn’t `as.vector()` work?
+
+[Because lists are already technically a type of vector of mode list.]{.answer}
+
+3. Compare and contrast `c()` and `unlist()` when combining a date and date-time into a single vector.
+
+```{r}
+
+d <- as.Date(c("2024-08-08", "2024-08-07"))
+
+dt <- as.Date.POSIXct(d, tz = "UTC")
+c(d, dt)
+unlist(d, dt)
+unlist(d)
+unlist(dt)
+```
+
+[using `c()` creates a the date the attributes are stripped, so the time is lost?]{.answer}
+
+## 3.6 Data Frames and Tibbles
+
+### Notes
+
+:::{.definition}
+**Data Frame**
+
+"A named list of vectors with attributes for (column) `names`, `row.names`, and its `class`, 'data.frame'."
+
+Each vector in the data frame must have the same length.
+:::
+
+:::{.concept}
+**Tibbles**
+
+- tibbles do less and complain more than data.frames
+
+    - they have a longer class vector than data.frames 
+    
+    - they never coerce input (lazy)
+    
+    - they do not automatically transform non-syntactic names
+    
+    - tibbles will only recycle vectors of length one
+    
+    - tibbles allow you to refer to variables created during construction! (they are evaluated left-to-right)
+::: 
+
+- tibbles do not support rownames because in many cases they are undesirable 
+
+- subsetting has been fixed with tibbles so that `[` always returns a tibble (a data.frame sometimes returns a vector if subsetting only one variable), and `$` won't do partial matching 
+
+    - this can cause problems with legacy code if you subset with `[`; instead use 
+    df[["col"]] which works with both data.frames and tibbles to extract a single column
+    
+- data frames can contain lists (very useful! for model outputs?)
+
+    - but must add after creation or wrap in using `I()`
+    
+    - tibbles can have lists included directly
+    
+- you can also have matrices in a dataframe column if the number of rows are the same
+
+    - but use caution, many functions assume all columns are vectors
+    
+
+### Exercises
+
+1. Can you have a data frame with zero rows? What about zero columns?
+
+[Yes, you can create an empty data frame]{.answer}
+
+2. What happens if you attempt to set rownames that are not unique?
+
+[You get an error message that says duplicate rownames are not allowed]{.answer}
+
+3. If `df` is a data frame, what can you say about `t(df)`, and `t(t(df))`? Perform some experiments, making sure to try different column types.
+
+```{r}
+df <- data.frame(a = c(1:3), b = c(4:6))
+
+t(df)
+
+t(t(df))
+
+df1 <- data.frame(a = c(1:3), b = c("a", "b", "c"))
+
+t(df1)
+
+t(t(df1))
+
+```
+
+[The "values" of the data frame will end up back in the same position with t(t(df)), but if the columns are not of the same type they will have been coerced to another type.]{.answer}
+
+4. What does `as.matrix()` do when applied to a data frame with columns of different types? How does it differ from `data.matrix()`?
+
+```{r}
+
+as.matrix(df1)
+
+data.matrix(df1)
+
+```
+
+[`as.matrix` will again coerce columns to be of the same type based on the hierarchy of atomic vectors, while `data.matrix` coerces everything to be numeric.]{.answer}
+
+## 3.7 NULL
+
+### Notes
+
+- use `NULL` to represent an empty vector or an absent vector (e.g. in a function call to an optional argument)
+
+
+## Definitions
+
+
+:::{.definition}
+**S3 object**
+
+S3 objects have a `class` attribute and will behave differently from vectors when passed to a 
+generic function. These are built off of a base type and usually have other attributes to store information.
+:::
+
+:::{.concept}
+**lists**
+
+- each element of a list is actually the same type because it is a *reference* to another object
+:::

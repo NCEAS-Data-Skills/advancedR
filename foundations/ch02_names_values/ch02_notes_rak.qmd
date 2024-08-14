@@ -1,29 +1,69 @@
 ---
 title: "Notes for Chapters 2"
 format: html
-editor: visual
+editor: source
 ---
+
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+```{r echo=FALSE}
+library(lobstr)
+```
 
 ## 2.2 Binding Basics
 
-- R binds names to objects; so two "names" can point to the same object
-- names have values, the object itself doesn't have a name per se
-- when naming, if using non-syntactic names you need to use backticks (``) rather
-than quotes or else you have to retrieve names in different ways
+-   R binds names to objects; so two "names" can point to the same object
+-   names have values, the object itself doesn't have a name per se
+-   when naming, if using non-syntactic names you need to use backticks (\`\`) rather than quotes or else you have to retrieve names in different ways
 
-### Exercises 
+### Exercises
 
-1. Explain the relationship between `a`, `b`, `c` and `d` in the following code:
+1.  Explain the relationship between `a`, `b`, `c` and `d` in the following code:
 
 ```{r ex_2.2.1}
+
 a <- 1:10
 b <- a
 c <- b
 d <- 1:10
 
+# no modifications or copies made to `a` from previous code
+# check the object identifier with lobstr::obj_addr()
+v <- list(a, b, c, d)
+
+lobstr::obj_addr(a)
+lobstr::obj_addr(b)
+lobstr::obj_addr(c)
+lobstr::obj_addr(d)
+
+purrr::map(v, lobstr::obj_addr)
+
+lobstr::ref(v)
 ```
 
-1. The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
+[Objects `a`, `b`, and `c` all point to the same object, but object `d` points to a different object. ]{.answer}
+
+[Why do I see different answers when I create a list that points to each object?]{.question}
+
+[Not sure why still, but using `lobstr::ref` may be necessary for lists]{.answer}
+
+2.  The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with `lobstr::obj_addr()`.
 
 ```{r}
 lobstr::obj_addr(mean)
@@ -33,40 +73,46 @@ lobstr::obj_addr(evalq(mean))
 lobstr::obj_addr(match.fun("mean"))
 ```
 
-Ok, yes they do! Interesting that there are so many ways to access the function.
+[Ok, yes they do! Interesting that there are so many ways to access the function.]{.answer}
 
-1. By default, base R data import functions, like read.csv(), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+3.  By default, base R data import functions, like read.csv(), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
 
-you may not know how to access the names? if people are using different read in functions 
-that could lead to difficulties working on the same dataset?
+[you may not know how to access the names? if people are using different read in functions that could lead to difficulties working on the same dataset?]{.answer}
+[option `check.names = FALSE` will suppress this behavior]{.answer}
 
-1. What rules does make.names() use to convert non-syntactic names into syntactic ones?
+4.  What rules does make.names() use to convert non-syntactic names into syntactic ones?
 
-1. I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+[adds an "X" to the beginning of the name (if necessary) and turns all invalid characters into "."]{.answer}
 
+5.  I slightly simplified the rules that govern syntactic names. Why is .123e1 not a syntactic name? Read ?make.names for the full details.
+
+[names can start with a dot but not if they are followed by a number]{.answer}
 
 ## 2.3 Copy on Modify
 
 ### Notes
 
-- woah, lists seem complicated
+-   apparently this will "radically improve my intuition about the performance of R code"
 
-- names point to the same object until that object is modified, at which point
-a copy is made
+-   woah, lists seem complicated
 
-- how the copy is made depends on the object type - lists that are modified do not 
-copy un-modified list items, they still point to the original list objects 
+-   names point to the same object until that object is modified, at which point a copy is made
 
-- data.frames will only copy columns that need to be modified, but point to unchanged 
-columns in the original object
+-   how the copy is made depends on the object type - lists that are modified do not copy un-modified list items, they still point to the original list objects
 
-- changing rows copies the entire data frame
+-   data.frames will only copy columns that need to be modified, but point to unchanged columns in the original object
+
+-   changing rows copies the entire data frame
+
+- character vectors exist in a "global string pool"
 
 ### Exercises
 
-1. Why is tracemem(1:10) not useful?
+1.  Why is tracemem(1:10) not useful?
 
-1. Explain why tracemem() shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
+[because it has not been bound to a name and so is ephemeral]{.answer}
+
+2.  Explain why tracemem() shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
 
 ```{r}
 x <- c(1L, 2L, 3L)
@@ -75,7 +121,194 @@ x
 x[[3]] <- 4
 ```
 
-It seems like maybe it creates two copies because first it has to change the 
-vector type (integer to numeric) and then modify the value
+[It seems like maybe it creates two copies because first it has to change the vector type (integer to numeric) and then modify the value]{.answer}
 
+3. Sketch out the relationship between the following objects: 
+
+```{r}
+a <- 1:10
+b <- list(a, a)
+c <- list(b, a, 1:10)
+```
+
+![](advancedR_exercise_rak2.3.3.png)
+
+4. What happens when you run this code? Draw a picture.
+
+```{r}
+x <- list(1:10)
+x[[2]] <- x
+```
+
+
+![](advancedR_exercise_rak2.3.4.png)
+
+## 2.4 Object Size
+
+### Notes
+- use `lobstr::obj_size` to see how much memory is used by an object
+
+- this is where you can see why the pointers/bindings matter; a list that points 
+to the same object multiple times doesnt' take much more memory than that object itself
+
+- **alternative representation**: allows R to represent vectors compactly (certain types) - for example, with `:` in c(1:4); only has to store the first and last value
+
+### Exercises
+
+1. In the following example, why are `object.size(y)` and `obj_size(y)` so radically different? Consult the documentation of `object.size()`.
+
+```{r}
+y <- rep(list(runif(1e4)), 100)
+
+object.size(y)
+#> 8005648 bytes
+obj_size(y)
+#> 80,896 B
+```
+
+[`object.xize()` does not detect if elements of a list are shared]{.answer}
+
+2. Take the following list. Why is its size somewhat misleading?
+
+```{r}
+funs <- list(mean, sd, var)
+obj_size(funs)
+#> 17,608 B
+```
+
+[Because those objects are already part of base R and the list is just pointing to
+those objects, so it isn't actually taking any more memory?]{.answer}
+
+3. Predict the output of the following code:
+
+```{r}
+a <- runif(1e6)
+obj_size(a)
+
+b <- list(a, a)
+obj_size(b)
+obj_size(a, b)
+
+b[[1]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+
+b[[2]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+```
+
+[List b should be only slightly larger than list a, because it is pointing to the same
+object in both elements initially; when it is modified it should be the size of about two of list
+a, and then when it is modified again the size of a and b will be larger because b and a will be totally different.]
+
+## 2.5 Modify-in-place
+
+### Notes
+
+- use `tracemem()` to empirically determine when copies happen 
+
+- objects bound to a single name are modified in place (no copies happen)
+
+```{r}
+x <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+medians <- vapply(x, median, numeric(1))
+
+
+for (i in seq_along(medians)) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+```
+
+- this didn't seem to take that long actually? 
+
+- but i guess using lists is a better way to do this as opposed to data.frames because of how
+they behave
+
+- environments are always modified in place (i.e. you don't get copies?)
+
+- environments can contain themselves...
+
+### Exercises
+
+1. Explain why the following code doesn’t create a circular list.
+
+```{r}
+x <- list()
+x[[1]] <- x
+x
+
+```
+
+
+
+2. Wrap the two methods for subtracting medians into two functions, then use the ‘bench’ package to carefully compare their speeds. How does performance change as the number of columns increase?
+
+```{r}
+# create functions
+x05 <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+x10 <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+x15 <- data.frame(matrix(runif(5 * 1e4), ncol = 5))
+
+df_fun <- function(x) {
+  medians <- vapply(x, median, numeric(1))
+
+  for (i in seq_along(medians)) {
+  x[[i]] <- x[[i]] - medians[[i]]
+}
+
+}
+
+list_fun <- function(x) {
+  medians <- vapply(x, median, numeric(1))
+  y <- as.list(x)
+  
+for (i in 1:5) {
+  y[[i]] <- y[[i]] - medians[[i]]
+}
+}
+
+bench::bench_time(df_fun(x05))
+bench::bench_time(list_fun(x05))
+
+
+bench::bench_time(df_fun(x10))
+bench::bench_time(list_fun(x10))
+
+
+bench::bench_time(df_fun(x15))
+bench::bench_time(list_fun(x15))
+
+
+```
+[the legnth of time stays about the same for the dataframe, but decreases for the list]{.answer}
+
+3. What happens if you attempt to use tracemem() on an environment?
+
+```{r eval=FALSE}
+
+e_test <- rlang::env(a = 1, b = 2, c= 3)
+tracemem(e_test)
+
+```
+
+[you get an error that says "tracemem is not useful for promise and environment objects"]{.answer}
+
+## 2.6 Unbinding and the garbage collector 
+
+### Notes
+
+- garbage collection removes objects that contain no binding to a name to free up memory when needed
+
+- force garbage collection by calling `gc()` - don't really need to do this but can
+if you want to have R return memory to your operating system (or to see how much memory is used)
+
+- can see how much memory is used by calling lobstr::mem_used() but it won't totally agree with memory reported by operating system
+
+### Exercises
+
+
+## Key Terms and Concepts
+
+**`alternative representation`**: allows R to represent vectors compactly (certain types) - for example, with `:` in c(1:4)
 
