@@ -1,5 +1,5 @@
 ---
-title: "Chapter 4 notes"
+title: "Chapter 4 notes: Subsetting"
 author: "Casey O'Hara"
 format: 
   html:
@@ -8,8 +8,6 @@ editor: source
 ---
 
 ```{r setup}
-library(lobstr)
-library(bench)
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -18,4 +16,466 @@ library(bench)
   font-weight: bolder;
 }
 ```
+
+## 4.2 Selecting multiple elements
+
+Using `[` to select elements from a vector
+
+### 4.2.1 Atomic vectors
+
+```{r}
+x <- c(2.1, 4.2, 3.3, 5.4) ### decimal digit indicates original vector position
+```
+
+* Positive integers select elements at specified positions; duplicated integers return duplicated values.  Real numbers are truncated to integers.
+
+```{r}
+x[c(3, 1)]
+x[c(1, 1)]
+x[c(2.1, 3.9)]
+```
+
+* Negative integers drop elements
+
+```{r}
+x[-c(3, 1)]
+x[c(-3, -1)]
+x[-1.4]
+```
+
+* Can't mix neg and pos integers in subsetting by index
+
+```{r, eval = FALSE}
+x[c(-1, 3)]
+```
+
+* Logical vectors return elements where TRUE; recycled if not as long as orig vec
+
+```{r}
+x[c(T, F, F, T)]
+x[c(TRUE, FALSE)]   ### recycled to T F T F
+x[c(T, F, F, T, T)] ### extras result in NA
+x[c(T, NA, T, F)]   ### NAs return an NA
+```
+
+* Subsetting by nothing returns the original vector
+
+```{r}
+x[]
+```
+
+* Subsetting by zero returns zero-length vector
+
+```{r}
+x[0]
+```
+
+* If vector is named, can subset using characters (element names must match).  DON'T subset with factors (why would you?)
+
+```{r}
+names(x) <- letters[1:4]
+
+x[c('a', 'c')]
+x[c('apple', 'cherry')] ### indexed names don't match so NA
+```
+
+### 4.2.2 Lists
+
+Subsetting a list with `[` returns a list with just those elements.  Subsetting with `[[` and `$` pulls the item out of the single element (if multiple elements, just pulls first index given)
+
+```{r}
+y <- list(1:3, 'cat', c(TRUE, FALSE), seq(0, 1, .1))
+names(y) <- letters[1:4]
+
+y[c(1, 3)]
+y[[c(1, 3)]]
+```
+
+### 4.2.3 Matrices and arrays
+
+Provide a 1-d index for each dimension, sep by comma.  Blank index returns all elements in that dimension.
+
+Note `[` simplifies the output by dropping any dimensions that no longer exist.
+
+```{r}
+a <- matrix(1:9, nrow = 3)
+a[1, ] ### returns 1-d vector from 2-d matrix
+```
+
+Since matrixes and arrays are rejiggered vectors, you can subset elements by a single vector.  Note that arrays in R are "column-major" order, unlike apparently rasters (since I use this trick all the time for rasters, but indices fill in by rows).
+
+Can also subset by matrices with the same number of columns as the dimensions of the object being subset (e.g., 2 col mtx to subset a 2-d mtx, 3 col mtx for a 3-d array, etc).
+
+### 4.2.4 Data frames and tibbles
+
+Single-index subsetting: selects columns (elements of the list underneath).
+
+Two-index subsetting: behaves like subsetting a matrix.
+
+```{r}
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+
+df[ , 1] ### subsetting dataframe to choose one column returns a vector
+
+tb <- tibble::tibble(x = 1:3, y = 3:1, z = letters[1:3])
+
+tb[ , 1] ### subsetting tibble to choose one column returns a tibble with just that column
+```
+
+### 4.2.5 Preserving dimensionality
+
+Since subsetting with `[` simplifies by dropping dimensions with length one, if you want to preserve that dimensionality, use `drop = FALSE`.
+
+```{r}
+str(a[1, ])               ### 1-d vector
+str(a[1, , drop = FALSE]) ### 1 x 3 matrix
+df[ , 1, drop = FALSE]    ### now returns dataframe
+```
+
+### 4.2.6 Exercises
+
+1. Fix each of the following common data frame subsetting errors:
+
+```{r}
+# mtcars[mtcars$cyl = 4, ] ### find rows where 4 cylinders
+mtcars[mtcars$cyl == 4, ]  ### need == match, not = equals
+
+# mtcars[-1:4, ]           ### drop rows 1-4
+mtcars[-c(1:4), ]          ### -1:4 is -1, 0, 1, 2, 3, 4, but we want -1, -2, -3, -4
+
+# mtcars[mtcars$cyl <= 5]  ### results in a 1x28 vector of rows, but no columns?
+mtcars[mtcars$cyl <= 5, ]
+
+# mtcars[mtcars$cyl == 4 | 6, ] ### faulty test construction: mtcars$cyl == 4 is T/F depending on 4 cyl, but 6 evaluates to TRUE for all rows.
+mtcars[mtcars$cyl %in% c(4, 6), ] ### or: mtcars$cyl == 4 | mtcars$cyl == 6
+```
+
+2. Why does the following code yield five missing values? (Hint: why is it different from `x[NA_real_]`?)
+
+```{r}
+x <- 1:5
+x[NA]
+#> [1] NA NA NA NA NA
+```
+
+>[`NA` is logical; logical vectors for subsetting recycle to the full length of the subsetted vector.  `NA_real_` is not logical, so it is not recycled (just as integers and reals are not recycled).]{.answer}
+
+3. What does `upper.tri()` return? How does subsetting a matrix with it work? Do we need any additional subsetting rules to describe its behaviour?
+
+```{r}
+x <- outer(1:5, 1:5, FUN = "*")
+x[upper.tri(x)]
+```
+
+>[Returns a matrix with TRUE for all elements above the diagonal (row < column), and FALSE for diagonal and below.  SUbsetting returns a vector of those TRUE values, in order by column (element [1, 2], then element [1, 3], then element [2, 3], etc.).  This behavior comes from the dimensionality dropping, since the subsetting reduces the dimensionality of the original matrix (was 5x5, but as a matrix, the result would only be 4x4, maybe this coerces it to switch to a vector instead?)]{.answer}
+
+4. Why does `mtcars[1:20]` return an error? How does it differ from the similar `mtcars[1:20, ]`?
+
+>[Since mtcars is a dataframe, `mtcars[1:20]` (subsetting by a single vector) wants to return the matching columns, but `mtcars` only has 11 columns, therefore, error!]{.answer}
+
+5. Implement your own function that extracts the diagonal entries from a matrix (it should behave like `diag(x)` where `x` is a matrix).
+
+```{r}
+r_c <- 1:5
+get_diag <- function(mtx) {
+  ### Check for matrixness
+  if(!'matrix' %in% class(mtx)) stop('gimme a matrix!')
+  
+  ### Check for squareness
+  d <- dim(mtx)
+  if(length(d) != 2) stop('gimme a 2-d matrix!')
+  if(d[1] != d[2]) stop('gimme a square matrix!')
+  
+  diag <- .row(d) == .col(d)
+  
+  return(mtx[diag])
+}
+```
+
+
+6. What does `df[is.na(df)] <- 0` do? How does it work?
+
+>[Identifies which elements of df are NA, and replaces them with zero.  This definitely works for vectors and matrices, but does it work for dataframes? Yes, verified below:]{.answer}
+
+```{r}
+df_na <- data.frame(x = 1:3, y = c(2, NA, 5), z = c('a', 'b', NA))
+df_na[is.na(df_na)] <- 0
+```
+
+## 4.3 Selecting a single element
+
+Here using `[[` and `$`.  `[[` extracts a single item, and `x$y` is shorthand for `x[["y"]]`.
+
+### 4.3.1 `[[`
+
+`[` on a list always returns a list. `[[` returns only a single element, always.  
+
+```{r}
+x <- list(1:3, 'a', 4:6)
+x[1] ### list
+x[[1]] ### the stuff inside element 1 of the list
+```
+
+Using a vector in `[[` operates recursively for some reason... weird, avoid it!
+
+```{r}
+x[[1:2]]  ### grabs element 1, then grabs element 2 from that result
+```
+
+While you have to use `[[` on lists to get something out of the list, you can also use it on atomic vectors to extract a single item.  The book recommends using this on vectors when extracting a single value, to reinforce that single-value expectaion.
+
+### 4.3.2 `$`
+
+Roughly, `x$y` is shorthand for `x[["y"]]`.  A big difference between the two is that `$` does partial matching where `[[` does not.  There's a setting to warn about this behavior.
+
+```{r}
+x <- list(abc = 1:3)
+x$a
+x[['a']]
+
+options(warnPartialMatchDollar = TRUE)
+x$a
+```
+
+This partial match behavior also works on data frames, so `mtcars$mpg` and `mtcars$m` both return the same result.  Use tibbles to avoid this (no partial matching allowed).
+
+### 4.3.3 Missing and out of bound indices
+
+Atomic vectors and lists have different responses to invalid indices.  Sometimes an error, sometimes a NULL.  To avoid these inconsistencies, esp when working w comex multilevel data structures, consider using `purrr::pluck()` and `chuck()`.
+
+### 4.3.4 `@` and `slot()`
+
+For S4 objects, `@` is similar to `$`, and `slot()` is equivalent to `[[`.  More to come when we get to S4 objects.
+
+### 4.3.5 Exercises
+
+Brainstorm as many ways as possible to extract the third value from the `cyl` variable in the `mtcars` dataset.
+
+```{r}
+mtcars[3, 2]       ### third row, second column
+mtcars$cyl[3]      ### grab cyl column then third element
+mtcars$cy[[3]]     ### partial column name match
+mtcars[['cyl']][3] ### use [[ instead of $
+mtcars[[c(2, 3)]]  ### recursive [[
+mtcars['Datsun 710', 'cyl'] ### row and column names
+```
+
+Given a linear model, e.g., `mod <- lm(mpg ~ wt, data = mtcars)`, extract the residual degrees of freedom. Then extract the R squared from the model summary `(summary(mod))`.
+
+```{r}
+mod <- lm(mpg ~ wt, data = mtcars)
+
+mod$df.residual
+mod[['df.residual']]
+
+summary(mod)$adj.r.squared
+```
+
+## 4.4 Subsetting and assignment
+
+All subsetting operators can be combined with assignment to modify selected values: `x[i] <- value`.
+
+```{r}
+x <- 1:5
+x[c(1,2)] <- c(101, 102)
+```
+
+Make sure `length(value)` is the same as `length(x[i])` to avoid weird recycling rules.
+
+To remove an item from a list, use `x[[i]] <- NULL`.  To add a literal `NULL` (when would you want to do that?), use `x[i] <- list(NULL)`
+
+Subsetting with nothing preserves the structure of the original object.
+
+```{r}
+mtcars <- datasets::mtcars
+mtcars[] <- lapply(mtcars, as.integer) ### change contents of mtcars, but not the structure
+is.data.frame(mtcars)
+
+mtcars <- lapply(mtcars, as.integer) ### replace mtcars with a list result
+is.data.frame(mtcars)
+```
+
+## 4.5 Applications
+
+### 4.5.1 Lookup tables (character subsetting)
+
+Character matching with a named vector
+
+```{r}
+x <- c("m", "f", "u", "f", "f", "m", "m")
+lookup <- c(m = "Male", f = "Female", u = NA)
+lookup[x]
+unname(lookup[x]) ### remove names
+```
+
+### Matching and merging by hand (integer subsetting)
+
+More complex lookups with multiple columns of info, use `match()`.
+
+```{r}
+grades <- c(1, 2, 2, 3, 1)
+
+info <- data.frame(
+  grade = 3:1,
+  desc = c("Excellent", "Good", "Poor"),
+  fail = c(F, F, T)
+)
+
+id <- match(grades, info$grade)
+info[id, ]
+```
+
+If matching multiple columns, collapse to a single column using `interaction()` or better yet use a join/merge function.
+
+### 4.5.3 Random samples and bootstraps (integer subsetting)
+
+Use integer indices to randomly sample/bootstrap.  `sample(n)` to generate a random permutation of `1:n` (`sample(x = <integer length 1>)` samples from `1:n`)
+
+```{r}
+df <- data.frame(x = c(1, 2, 3, 1, 2), y = 5:1, z = letters[1:5])
+
+# Randomly reorder
+df[sample(nrow(df)), ]
+```
+
+### 4.5.4 Ordering (integer subsetting)
+
+`order()` on a vector returns an integer vector describing how to put the elements in ascending order.
+
+```{r}
+x <- c("b", "c", "a")
+order(x)
+x[order(x)]
+```
+
+```{r}
+df2 <- df[sample(nrow(df)), 3:1]; df2
+
+df2[order(df2$x), ]      ### reorder by values in column x
+
+df2[, order(names(df2))] ### reorder by column names
+
+```
+
+### 4.5.5 Expanding aggregated counts (integer subsetting)
+
+E.g., your data is already summarized to count identical observations.
+
+```{r}
+df <- data.frame(x = c(2, 4, 1), y = c(9, 11, 6), n = c(3, 5, 1))
+rep(1:nrow(df), times = df$n)
+#> [1] 1 1 1 2 2 2 2 2 3
+
+df[rep(1:nrow(df), df$n), ]
+```
+
+### 4.5.6 Removing columns from data frames (character)
+
+Set columns to NULL, or subset using only the columns you want
+
+```{r}
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+df$z <- NULL
+df
+
+df <- data.frame(x = 1:3, y = 3:1, z = letters[1:3])
+df[c("x", "y")]
+
+```
+
+### 4.5.7 Selecting rows based on a condition (logical subsetting)
+
+Use boolean vector operators `|` and `&` instead of "short-circuiting scalar operators" `&&` and `||`.  Look into those!
+
+```{r}
+mtcars <- datasets::mtcars
+mtcars[mtcars$gear == 5, ]
+```
+
+### 4.5.8 Boolean algebra vs. sets (logical and integer)
+
+Set operations: integer subsetting; Boolean algebra: logical subsetting.  
+
+* Set operations more effective/efficient when you want to find the first or last TRUE
+* or when you have few TRUE values and lots of FALSE - might require less storage
+
+```{r}
+x <- sample(10) < 4
+which(x)
+
+unwhich <- function(x, n) {
+  out <- rep_len(FALSE, n)
+  out[x] <- TRUE
+  return(out)
+}
+
+unwhich(which(x), 10)
+```
+
+Logical to integer equivalents:
+
+* `x & y` <-> `intersect(x, y)`
+* `x | y` <-> `union(x, y)`
+* `x & !y` <-> `setdiff(x, y)`
+* `xor(x, y)` <-> `setdiff(union(x, y), intersect(x, y))`
+
+### 4.5.9 Exercises
+
+1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
+
+>[Permute results in the same size output.  Does it simply change the order, or can it behave like a bootstrap?  Sample from the names of the dataframe columns, and subset based on this.  Can also subset based on column numbers (indexing by element in list)]{.answer}
+
+```{r}
+df <- data.frame(x = 1:4, y = sample(4), z = LETTERS[sample(4)], w = letters[sample(4)])
+
+new_cols <- sample(names(df), replace = TRUE)
+
+### one-dimension subset:
+df[new_cols]
+
+### two-dimension subset:
+df[ , new_cols]
+
+### or with column numbers:
+df[sample(nrow(df), replace = TRUE)]
+```
+
+>[Simultaneously permuting rows and columns, sure:]{.answer}
+
+```{r}
+new_cols <- sample(names(df), replace = TRUE)
+new_rows <- sample(1:nrow(df), replace = TRUE)
+df[new_rows, new_cols]
+
+### or
+df[sample(nrow(df), replace = TRUE), sample(ncol(df), replace = TRUE)]
+```
+
+
+2. How would you select a random sample of m rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?
+
+>[First part: Create a sample vector of integers from 1:nrow(df).  Subset using that.  Second part: I guess select a random sample value x, and subset x:(x+m-1).  If this overflows, ???]{.answer}
+
+```{r}
+l <- 20; m = 5
+df <- data.frame(x = 1:l, y = sample(l), z = LETTERS[sample(l)])
+
+sample_vec <- sample(1:nrow(df), size = m, replace = TRUE)
+
+df[sample_vec, ]
+
+sample1 <- sample(1:nrow(df), size = 1)
+df[sample1:(sample1+m-1), ]
+```
+
+
+3. How could you put the columns in a data frame in alphabetical order?
+
+>[use `order` on the column names, and subset using those ordered names]{.answer}
+
+```{r}
+df <- data.frame(x = 1:3, a = 4:6, q = letters[10:12])
+df[order(names(df))]
+```
+
 
