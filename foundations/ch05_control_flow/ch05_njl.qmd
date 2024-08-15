@@ -1,0 +1,36 @@
+---
+title: "Chapter 5: Control Flow -- Notes & Exercises"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+## 5.1 Introduction
+
+
+
+## 5.2 Choices
+
+
+
+## 5.3 Loops
+
+
+
