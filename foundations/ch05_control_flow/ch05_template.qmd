@@ -1,5 +1,5 @@
 ---
-title: "Chapter 5 Notes and Exercises"
+title: "Chapter 5: Control Flow -- Notes & Exercises"
 format: 
   html:
     toc: true
@@ -12,6 +12,9 @@ editor: source
 -   Update file name, add author field as appropriate
 
 -   Feel free to customize this template as much as you'd like!
+
+-   yaml and setup chunk adapted from Casey O'Hara and Nick J Lyon
+
 
 ```{r setup}
 library(lobstr)
