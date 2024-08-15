@@ -50,7 +50,7 @@ Can't use numbers unless they're in back-ticks because R doesn't usually allow n
 
         -   `attr()` ( call attribute of specified object like `attr(a, "x")` )
 
-        -    `str(attributes())`
+        -   `str(attributes())`
 
     -   set:
 
