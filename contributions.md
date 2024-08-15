@@ -21,3 +21,25 @@ so that there aren't issues with people pushing the same file name
 - If you have changes or ideas to suggest to the structure of the group, create an issue with the label "enhancement" so we know to discuss them at the next meeting 
 
 - We could also do the same thing with questions that come up during the week while working on the exercises - create an issue with the "question" label and we can address that at the meeting. 
+
+## Glossary
+
+- if people want any concepts, notes, or definitions included in a glossary file, use the following tags at the end of your .qmd file for each chapter with notes:
+
+:::{.definition}
+**term**
+
+Define term here 
+:::
+
+:::{.concept}
+**concept**
+
+Define concept here
+:::
+
+:::{.function}
+**`function_name(args)`**
+
+describe function here
+:::
