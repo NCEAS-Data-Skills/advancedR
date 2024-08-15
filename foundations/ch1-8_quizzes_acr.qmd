@@ -17,15 +17,15 @@ Please make your own copy of the quiz template to fill out rather than working o
     df$`3` <- (df$`1`) + (df$`2`)
     ```
 
-Can't use numbers unless they're in back-ticks because R doesn't allow numbers as the first character in a variable or column name.
+Can't use numbers unless they're in back-ticks because R doesn't usually allow numbers as the first character in a variable or column name (I've wrangled a lot of time series data and gotten around this with `janitor::clean_names()` and `gsub`. Basically makes it so you can't index into them the same way (\$).
 
 2.  In the following code, how much memory does `y` occupy?
 
     ```{r}
     x <- runif(1e6)
     y <- list(x, x, x)
-    
-    lobstr::obj_size(y)
+
+    lobstr::obj_size(y) # 8.00 MB
     ```
 
 3.  On which line does `a` get copied in the following example?
@@ -33,30 +33,76 @@ Can't use numbers unless they're in back-ticks because R doesn't allow numbers a
     ```{r}
     a <- c(1, 5, 3, 2)
     b <- a 
-    b[[1]] <- 10 # a copied when b is modified
+    b[[1]] <- 10 # a copied when b is modified (copy-on-modify)
     ```
 
 ## Ch 3: Vectors
 
 1.  What are the four common types of atomic vectors? What are the two rare types?
 
+    -   logical, integer, double, and character
+
 2.  What are attributes? How do you get them and set them?
+
+    -   metadata associated with variables
+
+    -   get:
+
+        -   `attr()` ( call attribute of specified object like `attr(a, "x")` )
+
+        -    `str(attributes())`
+
+    -   set:
+
+        -   `attr()` with assignment operator to set: `attr(a, "x") <- "attributeblahblah"`
+
+        -   set with `structure()` , called again with `str(attributes())`
 
 3.  How is a list different from an atomic vector? How is a matrix different from a data frame?
 
+    -   elements of a list can be any data type!
+
+    -   elements of atomic vectors and matrices have to be the same data type
+
+    -   data frames can have different columns with different data types, but every element in a column must be the same type
+
 4.  Can you have a list that is a matrix? Can a data frame have a column that is a matrix?
 
+    -   I feel like I've done both in practice before but can't think of examples off the top of my head... here's what the book says:
+
+        > You can make a list-array by assigning dimensions to a list. You can make a matrix a column of a data frame with `df$x <- matrix()`, or by using [`I()`](https://rdrr.io/r/base/AsIs.html) when creating a new data frame [`data.frame(x = I(matrix()))`](https://rdrr.io/r/base/data.frame.html).
+
 5.  How do tibbles behave differently from data frames?
+
+    -   they're faster and lazier (I can relate).
+
+    -   official answer:
+
+        > Tibbles have an enhanced print method, never coerce strings to factors, and provide stricter subsetting methods.
 
 ## Ch. 4: Subsetting
 
 1.  What is the result of subsetting a vector with positive integers, negative integers, a logical vector, or a character vector?
 
+    -   
+
 2.  What's the difference between `[`, `[[`, and `$` when applied to a list?
+
+    -   single = column selection
+
+    -   double = row
+
+    -   \$ = column
+
+    -   oops that's for dfs \[come back\]
 
 3.  When should you use `drop = FALSE`?
 
+    -   is this about handling groups? like in group_by etc?
+
 4.  If `x` is a matrix, what does `x[] <- 0` do? How is it different from `x <- 0`?
+
+    -   sets all values to 0 but retains structure vs. reassigns to single numeric vector
 
 5.  How can you use a named vector to relabel categorical variables?
 

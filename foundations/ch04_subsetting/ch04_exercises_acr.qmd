@@ -1,0 +1,148 @@
+---
+title: "Chapter 4: Subsetting -- Exercises"
+author: "Anna Ramji"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+Adapted from Nick J Lyon's `ch04_exercises_njl.qmd`
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+## Selecting Multiple Elements
+
+1. Fix each of the following common data frame subsetting errors:
+
+```{r 04-multi-ex_q1}
+mtcars[mtcars$cyl = 4, ] # add second "="
+mtcars[-1:4, ] # need to put the row selection in parentheses (-1:4),
+mtcars[mtcars$cyl <= 5] # add ","; mtcars[mtcars$cyl <= 5,]
+mtcars[mtcars$cyl == 4 | 6, ] # can't say equal to this or that, has to be equal to this or equal to that OR use in operator %in% c(this, that)
+```
+
+
+2. Why does the following code yield five missing values? (Hint: why is it different from `x[NA_real_]`?)
+
+```{r 04-multi-ex_q2}
+x <- 1:5
+x[NA] # is logical, 
+x[NA_real_]
+```
+
+Answer key:
+> In contrast to NA_real, NA has logical type and logical vectors are recycled to the same length as the vector being subset, i.e. x[NA] is recycled to x[NA, NA, NA, NA, NA].
+
+
+3. What does `upper.tri()` return? How does subsetting a matrix with it work? Do we need any additional subsetting rules to describe its behaviour?
+
+```{r 04-multi-ex_q3}
+x <- outer(1:5, 1:5, FUN = "*")
+x[upper.tri(x)]
+```
+
+["Returns a matrix of logicals the same size of a given matrix with entries TRUE in the lower or upper triangle"... ]{.answer}
+
+4. Why does `mtcars[1:20]` return an error? How does it differ from the similar `mtcars[1:20, ]`?
+
+[there aren't 20 columns but there are 20+ rows]{.answer}
+
+
+got to this point, everything below is Nick's
+---------
+
+5. Implement your own function that extracts the diagonal entries from a matrix (it should behave like `diag(x)` where `x` is a matrix).
+
+[]{.answer}
+
+6. What does `df[is.na(df)] <- 0` do? How does it work?
+
+[The above code finds `NA`s in all columns of `df` and replaces them with zeros. It does this because `is.na(df)` returns a matrix of logical values where only the `NA` cells are `TRUE` and all others are `FALSE`. Assigning `0` then replaces only the `TRUE` cells (i.e., the `NA` cells). Intereestingly, `df[is.na(df)]` returns a vector whose length is equal to the number of `NA`s _in all columns of the data object_.]{.answer}
+
+```{r 04-multi-ex_a6}
+df <- data.frame(a = c(1, NA_real_, 2),
+                 b = c(NA_character_, "y", "z"))
+df
+
+df[is.na(df)] <- 0
+df
+```
+
+## Selecting a Single Element
+
+1. Brainstorm as many ways as possible to extract the third value from the cyl variable in the mtcars dataset.
+
+[See below]{.answer}
+
+```{r 04-single-ex_a1}
+mtcars$cyl[3]
+mtcars[["cyl"]][3]
+mtcars[3, 2]
+purrr::pluck(.x = mtcars, "cyl", 3)
+purrr::pluck(.x = mtcars, 2, 3)
+purrr::chuck(.x = mtcars, "cyl", 3)
+purrr::chuck(.x = mtcars, 2, 3)
+mtcars[c(-1:-2, -4:-32), c(-1, -3:-11)] # >:)
+```
+
+2. Given a linear model, (e.g., `mod <- lm(mpg ~ wt, data = mtcars)`), extract the residual degrees of freedom. Then extract the R squared from the model summary (`summary(mod)`)
+
+[See below]{.answer}
+
+```{r 04-single-ex_a2}
+mod <- lm(mpg ~ wt, data = mtcars)
+
+mod$df.residual
+mod[["df.residual"]]
+
+summary(mod)$r.squared
+summary(mod)[["r.squared"]]
+```
+
+## Applications
+
+1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a1-p1}
+mtcars[sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
+
+[Yes you can permute rows and columns at the same time but it is sort of horrible to look at.]{.answer}
+
+```{r 04-apps-ex_a1-p2}
+mtcars[sample(x = 1:nrow(mtcars), size = nrow(mtcars)), sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
+
+
+2. How would you select a random sample of `m` rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a2}
+m <- 3
+mtcars[sample(x = 1:nrow(mtcars), size = m), ]
+```
+
+3. How could you put the columns in a data frame in alphabetical order?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a3}
+mtcars[order(names(mtcars))]
+```

@@ -1,0 +1,266 @@
+---
+title: "Chapter 2: Names & Values -- Exercises"
+author: "Anna Ramji"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+### Setup
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(lobstr, bench)
+```
+
+```{scss custom-themes, echo=FALSE}
+// copied from Nick J Lyon
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+Textbook: [Advanced R](https://adv-r.hadley.nz/names-values.html#binding-basics)
+
+Solutions: [Advanced R Solutions](https://advanced-r-solutions.rbind.io/names-and-values)
+
+### **2.2: Binding Basics**
+
+1.  Explain the relationship between `a`, `b`, `c` and `d` in the following code:
+
+```{r}
+a <- 1:10
+b <- a
+c <- b
+d <- 1:10
+```
+
+[a, b, and c are all just pointing to the same object (a \<- 1:10). d is a different object but stores the same values 1:10]{.answer}
+
+2.  The following code accesses the mean function in multiple ways. Do they all point to the same underlying function object? Verify this with [`lobstr::obj_addr()`](https://rdrr.io/pkg/lobstr/man/obj_addr.html).
+
+```{r}
+mean 
+base::mean
+get("mean")
+evalq(mean)
+match.fun("mean")
+
+lobstr::obj_addr(mean)
+lobstr::obj_addr(base::mean)
+lobstr::obj_addr(get("mean"))
+lobstr::obj_addr(evalq(mean))
+lobstr::obj_addr(match.fun("mean"))
+```
+
+[Initially, they all seem to point at the same object, with \<bytecode: 0x147755e98\> and \<environment: namespace:base\>. When we run `lobstr::obj_addr()` on each method, we see the same value: "0x147755f40". This indicates that each method uses the same base mean function.]{.answer}
+
+3.  By default, base R data import functions, like [`read.csv()`](https://rdrr.io/r/utils/read.table.html), will automatically convert non-syntactic names to syntactic ones. Why might this be problematic? What option allows you to suppress this behaviour?
+
+[This might be problematic because it could change the names of the columns in the data frame (and absolutely will in some cases! `read_csv()` did this to me recently as well when working with FAO data). It's also irreversible, which means that you're corrupting the data while reading it in. The `check.names` argument allows you to suppress this behavior (can set to TRUE or FALSE), and is something that came up in OHI recently in the dataprep scripts for `np` and `prs_coral_harvest`, which I believe Casey (@oharac) helped develop.]{.answer}
+
+4.  What rules does [`make.names()`](https://rdrr.io/r/base/make.names.html) use to convert non-syntactic names into syntactic ones?
+
+-   [adds an "X" to the beginning of names if they don't begin with a letter or ".", or if the name is ".N", where N is a number (e.g., 3)]{.answer}
+
+-   [if the column names use important/"reserved" words in R, like "for", "if", "else", "TRUE", "FALSE", "NULL", "NA", etc. (see `?Reserved()`) appends with "." (e.g., "for" --\> "for.")]{.answer}
+
+-   [duplicated values altered by `make.unique()` (this happened to me with FAO data + using `read_csv()`, so flag columns ("S") all became "S..column-position", like "S..7")]{.answer}
+
+-   [had to look this last one up in the answer key:]{.answer}
+
+```{r}
+make.names("non-valid")  # "." replacement
+#> [1] "non.valid"
+make.names("@")          # prepending "X" + "." replacement 
+#> [1] "X."
+make.names("  R")        # prepending "X" + ".." replacement
+#> [1] "X..R"
+```
+
+5.  I slightly simplified the rules that govern syntactic names. Why is `.123e1` not a syntactic name? Read [`?make.names`](https://rdrr.io/r/base/make.names.html) for the full details.
+
+[it begins with a "." and is followed by a number]{.answer}
+
+### **2.3 Copy-on-modify**
+
+1.  Why is [`tracemem(1:10)`](https://rdrr.io/r/base/tracemem.html) not useful? [`1:10` isn't bound to a name... so you can't do anything to it or trace what is done to it]{.answer}
+
+2.  Explain why [`tracemem()`](https://rdrr.io/r/base/tracemem.html) shows two copies when you run this code. Hint: carefully look at the difference between this code and the code shown earlier in the section.
+
+```{r}
+x <- c(1L, 2L, 3L)
+tracemem(x)
+lobstr::obj_addr(x)
+
+x[[3]] <- 4
+lobstr::obj_addr(x)
+```
+
+[`x` starts out by containing integers (numberL), but then is modified when we reassign the third element to be a double (4, not 4L). This triggers the copy-on-modify behavior. Maybe not relevant, but when using `c()`, all elements are coerced to be the same data type (in this case, doubles once we modify the third element to be a 4 (double), whereas datatypes are preserved in `list()`)]{.answer}
+
+3.  Sketch out the relationship between the following objects:
+
+```{r}
+a <- 1:10
+b <- list(a, a)
+c <- list(b, a, 1:10)
+```
+
+-   [a -\> 1:10]{.answer}
+
+-   [b -\> a (twice)]{.answer}
+
+-   [c -\> b (which points at a twice), and points at a, and points at 1:10]{.answer}
+
+4.  What happens when you run this code?
+
+```{r}
+x <- list(1:10)
+tracemem(x)
+x[[2]] <- x # makes a copy
+tracemem
+ref(x)
+```
+
+> The list object previously bound to x is now referenced in the newly created list object. It is no longer bound to a name. The integer vector is referenced twice.
+
+### **2.4: Object size**
+
+1.  In the following example, why are [`object.size(y)`](https://rdrr.io/r/utils/object.size.html) and [`obj_size(y)`](https://rdrr.io/pkg/lobstr/man/obj_size.html) so radically different? Consult the documentation of [`object.size()`](https://rdrr.io/r/utils/object.size.html).
+
+```{r}
+y <- rep(list(runif(1e4)), 100)
+
+object.size(y) # from utils
+#> 8005648 bytes
+obj_size(y) # from lobstr
+#> 80,896 B
+#> 
+
+#testing out something
+x_test <- runif(1e6)
+lobstr::obj_size(x_test)
+y_test <- x_test + 1
+lobstr::obj_size(y_test)
+z_test <- list(x_test, y_test)
+lobstr::obj_size(z_test)
+```
+
+From the documentation for `lobstr::obj_size()`:
+
+> Accounts for all types of shared values, not just strings in the global string pool
+>
+> Includes the size of environments (up to env)
+>
+> Accurately measures the size of ALTREP objects
+
+[They're vastly different because `obj_size()` accounts for shared elements within the list -- meaning that `obj_size()` contains information about each of the 100 times that the 10,000 random numbers are selected (as Casey put it, pointing to the same random vector.)]{.answer}
+
+2.  Take the following list. Why is its size somewhat misleading?
+
+```{r}
+funs <- list(mean, sd, var)
+obj_size(funs)
+#> 17,608 B
+#> # mine says 18.76 kB...
+```
+[It's showing the size of functions that are already loaded by default in base R, which is somewhat misleading because when we use `obj_size()`, we're usually curious about how much "active" (not sure if this is the right term) memory it's taking up/requires.]{.answer}
+
+Answer key:
+https://advanced-r-solutions.rbind.io/names-and-values#object-size
+
+
+
+```{r}
+obj_size(letters)
+#> 1,712 B
+#> 1.71 kB
+obj_size(ggplot2::diamonds)
+#> 3,456,344 B
+#> 3.46 MB
+```
+
+
+3.  Predict the output of the following code:
+
+```{r}
+a <- runif(1e6) # random uniform distribution of 1 million numbers (implicit here is n = , which is for number of observations)
+obj_size(a) # in the textbook, this was an example! 
+#> 8,000,048 B
+#> because "A single double takes up an additional 8 bytes of memory.", x 1 million = 8 MB + 48 bytes
+
+# "Similarly, because R uses a global string pool character vectors take up less memory than you might expect: repeating a string 100 times does not make it take up 100 times as much memory."
+
+# this is super interesting:
+banana <- "bananas bananas bananas"
+obj_size(banana)
+#> 136 B
+obj_size(rep(banana, 100))
+#> 928 B
+
+b <- list(a, a)
+obj_size(b)
+obj_size(a, b)
+# based on the textbook example, this should only be 64 B bigger than a (3x repetition was 80 B, which is the size of of an empty list with 3 elements)
+#> "The list itself requires 64 bytes, 48 bytes for an empty list and 8 bytes for each element"
+
+b[[1]][[1]] <- 10 # set first element of first element of b to 10
+obj_size(b) # replaced a (runif(1e6), or 1 million random-uniform distributed numbers) with 1 number: 10
+obj_size(a, b)
+
+b[[2]][[1]] <- 10
+obj_size(b)
+obj_size(a, b)
+```
+
+This was wild to learn about.
+
+> Finally, R 3.5.0 and later versions have a feature that might lead to surprises: ALTREP, short for alternative representation. This allows R to represent certain types of vectors very compactly. The place you are most likely to see this is with : because instead of storing every single number in the sequence, R just stores the first and last number. This means that every sequence, no matter how large, is the same size <https://adv-r.hadley.nz/names-values.html#object-size>
+
+
+##**2.5: Modify-in-place**
+
+1.  Explain why the following code doesn’t create a circular list.
+
+```{r}
+x <- list()
+x[[1]] <- x
+```
+
+[`x` is an empty list, so its first element is nothing...]{.answer}
+
+2.  Wrap the two methods for subtracting medians into two functions, then use the ‘bench’ package17 to carefully compare their speeds. How does performance change as the number of columns increase?
+
+3.  What happens if you attempt to use `tracemem()` on an environment?
+
+##**2.6: Unbinding and the garbage collector**
+
+OMG I had no idea that `gc()` stood for garbage collector...
+
+https://adv-r.hadley.nz/names-values.html#gc
+
+> You can force garbage collection by calling gc(). But despite what you might have read elsewhere, there’s never any need to call gc() yourself. The only reasons you might want to call gc() is to ask R to return memory to your operating system so other programs can use it, or for the side-effect that tells you how much memory is currently being used:
+
+wowza....
+
+> `lobstr::mem_used()` is a wrapper around gc() that prints the total number of bytes used:
+>
+> ```{r}
+> mem_used()
+> #> 89,748,952 B
+> ```
+>
+> This number won’t agree with the amount of memory reported by your operating system. There are three reasons:
+>
+> It includes objects created by R but not by the R interpreter.
+>
+> Both R and the operating system are lazy: they won’t reclaim memory until it’s actually needed. R might be holding on to memory because the OS hasn’t yet asked for it back.
+>
+> R counts the memory occupied by objects but there may be empty gaps due to deleted objects. This problem is known as memory fragmentation.
+
