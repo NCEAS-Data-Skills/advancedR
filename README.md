@@ -13,4 +13,5 @@ Meetings are weekly on Thursdays at 12:30pm, online and in person in the Manzani
 |:-----------|:-------------------------:|
 | 2024-07-25 | First meeting - look at foundations quizzes |
 | 2024-08-15 | Read Ch. 2-4 & attempt exercises |
+| 2024-08-22 | Read Ch. 5 & 6 |
 
