@@ -1,0 +1,57 @@
+---
+title: "Chapter 6: Functions -- Notes & Exercises"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+## 6.1 Introduction
+
+
+
+## 6.2 Function Fundamentals
+
+
+## 6.3 Function Composition
+
+
+
+## 6.4 Lexical Scoping
+
+
+
+## 6.5 Lazy Evaluation
+
+
+## 6.6 `...` (Ellipsis)
+
+
+## 6.7 Exiting a Function
+
+
+
+## 6.8 Function Forms
+
+
+
+
+
+
+
