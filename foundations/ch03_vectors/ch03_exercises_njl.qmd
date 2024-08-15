@@ -166,7 +166,7 @@ data.frame()
 
 2. What happens if you attempt to set rownames that are not unique?
 
-You get both an error and a warning. They are as follows: 
+[You get both an error and a warning. They are as follows: ]{.answer}
 
 ```{r 03-df-tbl-ex_a2}
 ## Error in `.rowNamesDF<-`(x, value = value) : 
