@@ -1,0 +1,144 @@
+---
+title: "Chapter 5 Notes and Exercises"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+editor: source
+---
+
+## Setup
+
+-   Update file name, add author field as appropriate
+
+-   Feel free to customize this template as much as you'd like!
+
+```{r setup}
+library(lobstr)
+library(bench)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+# 5 Control flow
+
+From [Chapter 5](https://adv-r.hadley.nz/control-flow.html#control-flow) in the second edition of [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham. Note: Chapter 5 is a new chapter introduced in this edition of the book.
+
+The official answers to all exercises in this chapter can be found in [Chapter 4](https://advanced-r-solutions.rbind.io/control-flow) in the second edition of the [Advanced R Solutions](https://advanced-r-solutions.rbind.io/) textbook.
+
+## 5.1 Introduction
+
+### Quiz
+
+(also available in the `quizzes` sub-folder of the `foundations` folder) 
+
+Official answers [here](https://adv-r.hadley.nz/control-flow.html#control-flow-answers)
+
+-   What is the difference between if and ifelse()?
+
+-   In the following code, what will the value of y be if x is TRUE? What if x is FALSE? What if x is NA?
+
+```{r}
+y <- if (x) 3
+```
+
+>[]{.answer}
+
+-   What does `switch("x", x = , y = 2, z = 3)` return?
+
+>[]{.answer}
+
+### Outline
+
+-   Section 5.2 dives into the details of if, then discusses the close relatives `ifelse()` and `switch()`.
+
+-   Section 5.3 starts off by reminding you of the basic structure of the for loop in R, discusses some common pitfalls, and then talks about the related while and repeat statements.
+
+## 5.2 Choices
+
+### 5.2.1 Invalid inputs
+
+### 5.2.2 Vectorised `if`
+
+### 5.2.3 `switch()` statement
+
+### 5.2.4 Exercises
+
+1.  What type of vector does each of the following calls to [`ifelse()`](https://rdrr.io/r/base/ifelse.html) return?
+
+```{r}
+ifelse(TRUE, 1, "no")
+ifelse(FALSE, 1, "no")
+ifelse(NA, 1, "no")
+```
+
+Read the documentation and write down the rules in your own words.
+
+>[]{.answer}
+
+2.  Why does the following code work?
+
+```{r}
+x <- 1:10
+if (length(x)) "not empty" else "empty"
+#> [1] "not empty"
+
+x <- numeric()
+if (length(x)) "not empty" else "empty"
+#> [1] "empty"
+```
+
+>[]{.answer}
+
+## 5.3 Loops
+
+### 5.3.1 Common pitfalls
+
+### 5.3.2 Related tools
+
+### 5.3.3 Exercises
+
+1.  Why does this code succeed without errors or warnings?
+
+```{r}
+x <- numeric()
+out <- vector("list", length(x))
+for (i in 1:length(x)) {
+  out[i] <- x[i] ^ 2
+}
+out
+```
+
+>[]{.answer}
+
+2.  When the following code is evaluated, what can you say about the vector being iterated?
+
+```{r}
+xs <- c(1, 2, 3)
+for (x in xs) {
+  xs <- c(xs, x * 2)
+}
+xs
+#> [1] 1 2 3 2 4 6
+```
+
+>[]{.answer}
+
+3.  What does the following code tell you about when the index is updated?
+
+```{r}
+for (i in 1:3) {
+  i <- i * 2
+  print(i) 
+}
+#> [1] 2
+#> [1] 4
+#> [1] 6
+```
+
+>[]{.answer}
