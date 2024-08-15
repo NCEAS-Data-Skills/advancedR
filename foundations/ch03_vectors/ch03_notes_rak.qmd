@@ -4,6 +4,7 @@ format:
   html:
     toc: true
     theme: yeti
+    embed-resources: true
 ---
 
 

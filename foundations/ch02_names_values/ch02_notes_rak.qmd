@@ -310,5 +310,8 @@ if you want to have R return memory to your operating system (or to see how much
 
 ## Key Terms and Concepts
 
-**`alternative representation`**: allows R to represent vectors compactly (certain types) - for example, with `:` in c(1:4)
+:::{.definition}
+**`alternative representation`**
 
+allows R to represent vectors compactly (certain types) - for example, with `:` in c(1:4)
+:::
