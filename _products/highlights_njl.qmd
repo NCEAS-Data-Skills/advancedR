@@ -44,6 +44,14 @@ If `name` is an object containing one of the names in `x`,
 
 _See [4.3.1](https://adv-r.hadley.nz/subsetting.html#section) and [4.3.2](https://adv-r.hadley.nz/subsetting.html#section-1) for more information._
 
+### Looping Across Integers (Chapter 5)
+
+When you're looping across integers, it can be really tempting to use `1:length(x)` in the definition of the loop (I know I've done this!). However, if some issue in the code and/or data causes `x` to have a length of 0, you'll get some bizarre behavior that may be very hard to debug. Instead if you use `seq_along(x)` you'll never get atypical behavior because if `x` has length 0 the loop will simply run once (because it will return "1" even when whatever its sequencing along with has no elements).
+
+Your loop wouldn't work in either case but at least with `seq_along` it'll be immediately clear that the problem is with `x`.
+
+_See [5.3.1](https://adv-r.hadley.nz/control-flow.html#common-pitfalls) for more information._
+
 
 
 
