@@ -22,13 +22,94 @@ librarian::shelf(purrr)
 }
 ```
 
-## 5.1 Introduction
-
-
-
 ## 5.2 Choices
 
+Basic form `if` in R is as follows:
 
+```{r 05-choices_if}
+#| eval: false
+
+if (condition) true_action else false_action
+```
+
+If either the `if` or `else` actions require multiple steps they are wrapped in `{` (though even simple actions are sometimes wrapped in `{` for clarity).
+
+`if` without a clear "false action" invisibly returns `NULL` when the condition is not met.
+
+### 5.2.1 Invalid Inputs
+
+`if` must evaluate to `TRUE` or `FALSE` to work (so non-logical values and/or missing values cause errors). Vectors of greater than length 1 return a warning and `if` only evaluates the first element.
+
+### 5.2.2 Vectorized `if`
+
+If you have multiple elements and want `if` to act on each (separately) you can use `ifelse` which looks more like a standard function (in that it has clearly-defined arguments). Note that `ifelse` should only be used when both the `yes` and `no` outputs are the same type because otherwise the output can be tough to predict.
+
+`dplyr::case_when` is an alternative to `ifelse` that can handle any number of condition vector pairs.
+
+### 5.2.3 `switch()` Statements
+
+`switch()` is a compact replacement for code with many `else if` alternates. For instance, the following two code chunks are equivalent.
+
+```{r 05-choices_else-if}
+#| eval: false
+
+if (x == "a") {
+    "option 1"
+  } else if (x == "b") {
+    "option 2" 
+  } else if (x == "c") {
+    "option 3"
+  } else {
+    stop("Invalid `x` value")
+  }
+```
+
+```{r 05-choices_switch}
+#| eval: false
+
+switch(x,
+  a = "option 1",
+  b = "option 2",
+  c = "option 3",
+  stop("Invalid `x` value")
+)
+```
+
+**Note that the final component of `switch` _must_ throw an error.**
+
+### 5.2.4 Exercises
+
+1. What type of vector does each of the following calls to `ifelse()` return?
+
+```{r 05-choices-exercises_q1}
+#| eval: false
+
+ifelse(TRUE, 1, "no")
+ifelse(FALSE, 1, "no")
+ifelse(NA, 1, "no")
+```
+
+[First returns `1`, second returns `"no"`, third returns `NA`. Note that while it isn't technically necessary, defining the arguments of `ifelse` (`test`, `yes`, and `no`) makes the expected outcomes _much_ easier to predict (in my opinion).]{.answer}
+
+```{r 05-choices-exercises_a1}
+#| eval: false
+
+ifelse(test = TRUE, yes = 1, no = "no")
+ifelse(test = FALSE, yes = 1, no = "no")
+ifelse(test = NA, yes = 1, no = "no")
+```
+
+2. Why does the following code work?
+
+```{r 05-choices-exercises_q2}
+x <- 1:10
+if (length(x)) "not empty" else "empty"
+
+x <- numeric()
+if (length(x)) "not empty" else "empty"
+```
+
+[Because `length()` returns an integer so the condition actually being evaluated by `if` is essentially 'is this number any non-zero number (i.e., `TRUE`) or zero (i.e., `FALSE`)?' The length of an empty vector (as in the second case) is zero so the 'false action' is performed.]{.answer}
 
 ## 5.3 Loops
 
