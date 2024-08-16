@@ -6,14 +6,43 @@ engine: knitr
 code-overflow: wrap
 ---
 
-```{r libs}
-#| echo: false
-#| message: false
+## Foundations Highlights
 
-# Install/load needed libraries
-## install.packages("librarian")
-librarian::shelf(purrr)
+### Class Coercion (Chapter 3)
+
+When you combine multiple vector types of different classes, there are pre-determined rules for which class "wins" (i.e., which class both inputs will be coerced to automatically prior to combination). This order (from most specific to most general) is: 
+
+```{r class-coercion-order}
+#| eval: false
+
+logical > integer > double (~numeric) > character
 ```
+
+Other vector classes are secretly built on one of these four and are treated as such for class coercion purposes.
+
+- Factor = actually an integer
+- Date = actually a double/numeric (**days** since January 1^st^, 1970)
+- Date-times = actually a double/numeric (**seconds** since January 1^st^, 1970)
+- Duration = actually a double/numeric (units dependent on dates/date-times and stored in vector attributes)
+
+_See [3.2.4](https://adv-r.hadley.nz/vectors-chap.html#testing-and-coercion) and [3.4](https://adv-r.hadley.nz/vectors-chap.html#s3-atomic-vectors) for more information._
+
+### `[`, `[[`, and `$` (Chapter 4)
+
+If `x` is a train with multiple cars and each car contains multiple items:
+
+- `x[1]` grabs the whole first train car
+- `x[[1]]` grabs the _contents of_ the whole first train car
+- `x$1` is shorthand for `x[[1]]`
+
+`[[` versus `$`
+
+If `name` is an object containing one of the names in `x`,
+
+- `x[[name]]` will get the entity that matches the _value_ of `name`
+- `x$name` will get an entity that _is itself named_ `name`
+
+_See [4.3.1](https://adv-r.hadley.nz/subsetting.html#section) and [4.3.2](https://adv-r.hadley.nz/subsetting.html#section-1) for more information._
 
 
 
