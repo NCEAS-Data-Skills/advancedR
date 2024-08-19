@@ -1,0 +1,156 @@
+---
+title: "Chapter 5: Control Flow -- Notes & Exercises"
+author: "Casey O'Hara"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+execute:
+  warning: !expr NA ### suppresses warnings when rendering, but not in interactive mode
+  message: !expr NA
+editor: source
+---
+
+```{r, echo=FALSE}
+
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+# 5 Control flow
+
+From [Chapter 5](https://adv-r.hadley.nz/control-flow.html#control-flow) in the second edition of [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham. Note: Chapter 5 is a new chapter introduced in this edition of the book.
+
+The official answers to all exercises in this chapter can be found in [Chapter 4](https://advanced-r-solutions.rbind.io/control-flow) in the second edition of the [Advanced R Solutions](https://advanced-r-solutions.rbind.io/) textbook.
+
+## 5.2 Choices
+
+`if(condition) true_action else false_action`
+
+### 5.2.1 Invalid inputs
+
+* For an if statement, the condition must return a single TRUE/FALSE value, otherwise an error.  When given a logical vector of greater than length 1, will just use the first element (with a warning)
+
+### 5.2.2 Vectorised `if`
+
+`ifelse` tests against a logical vector, and assigns either a value from a yes vec or a no vec.  The yes and no vectors should be the same type.
+
+### 5.2.3 `switch()` statement
+
+`switch` allows for testing whether the input matches one of a set of possible responses, and returns the response based on the match.  The final option should always throw an error to avoid invisible NULLs.
+
+```{r, eval = FALSE}
+x_option <- function(x) {
+  switch(x,
+    a = "option 1",
+    b = "option 2",
+    c = "option 3",
+    stop("Invalid `x` value")
+  )
+}
+
+x_option('a')
+x_option('d')
+```
+
+
+### 5.2.4 Exercises
+
+1.  What type of vector does each of the following calls to [`ifelse()`](https://rdrr.io/r/base/ifelse.html) return?
+
+```{r}
+ifelse(TRUE, 1, "no")
+ifelse(FALSE, 1, "no")
+ifelse(NA, 1, "no")
+ifelse(c(TRUE, FALSE), 1, "no")
+```
+
+Read the documentation and write down the rules in your own words.
+
+>[First line: numeric 1 (first coerces to accommodate any values taken from `yes`).  Second line: character "no" (coerces to accommodate values from `no`).  Third, NA.  Fourth (my example): both character, to accommodate a `yes` answer and then a `no` answer]{.answer}
+
+2.  Why does the following code work?
+
+```{r}
+x <- 1:10
+if (length(x)) "not empty" else "empty"
+#> [1] "not empty"
+
+x <- numeric()
+if (length(x)) "not empty" else "empty"
+#> [1] "empty"
+```
+
+>[length(1:10) is 10, not zero, so TRUE.  Length(numeric()) is zero, so FALSE.]{.answer}
+
+## 5.3 Loops
+
+`for (item in vector) perform_action`
+
+Use `next()` to skip to next iteration, or `break` to exit the loop early.
+
+### 5.3.1 Common pitfalls
+
+* If generating data, pre-allocate output container to avoid slow loop.
+* Don't iterate over `1:length(x)`, not good if `x` is length 0.  Use `seq_along(x)` instead.
+* Don't iterate over S3 vectors, because loops typically strip the attributes.  Instead, loop over indices and use `[[` to access values by index.
+
+
+### 5.3.2 Related tools
+
+`while(condition) action`: performs `action` as long as `condition` remains TRUE.
+
+`repeat(action)` repeatedly performs `action` infinitely (until `break`).
+
+`repeat` is most flexible, then `while`, then `for` - best practice, use the *least* flexible solution.
+
+Instead of loops, use `map()` and `apply()` functions.
+
+
+### 5.3.3 Exercises
+
+1.  Why does this code succeed without errors or warnings?
+
+```{r}
+x <- numeric()
+out <- vector("list", length(x))
+for (i in 1:length(x)) {
+  out[i] <- x[i] ^ 2
+}
+out
+```
+
+>[`1:length(x)` here returns a two element vector: 1, 0.  This is b/c it increments from 1 to 0 (length of x).  So x[1] is NA (out of bounds), and that gets assigned to out[1]. x[0] returns numeric(0) which is assigned to out[0], but this doesn't change the object.]{.answer}
+
+2.  When the following code is evaluated, what can you say about the vector being iterated?
+
+```{r}
+xs <- c(1, 2, 3)
+for (x in xs) {
+  print(xs)
+  xs <- c(xs, x * 2)
+}
+xs
+#> [1] 1 2 3 2 4 6
+```
+
+>[While the value of xs changes over the course of the loop, it looks like the iterations are only over the *original* value of the loop.]{.answer}
+
+3.  What does the following code tell you about when the index is updated?
+
+```{r}
+for (i in 1:3) {
+  i <- i * 2
+  print(i) 
+}
+#> [1] 2
+#> [1] 4
+#> [1] 6
+```
+
+>[The index is updated at the start of each iteration, based on the original vector assigned for iteration.  Any changes to the index value are overwritten at the start of the next iteration.]{.answer}
