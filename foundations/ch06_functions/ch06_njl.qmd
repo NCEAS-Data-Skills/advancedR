@@ -83,8 +83,6 @@ function(x) 3()
 5. This code makes a list of all functions in the base package. Use it to answer the following questions:
 
 ```{r 06-fundament_q5}
-#| eval: false
-
 objs <- mget(ls("package:base", all = TRUE), inherits = TRUE)
 funs <- Filter(is.function, objs)
 ```
@@ -138,7 +136,13 @@ length(prim_funs)
 
 ## 6.3 Function Composition
 
+Can nest functions inside progressively more parentheses pairs or create intermediary objects to store results. Can also use `magrittr`'s `%>%` to chain together operations.
 
+| Composition Type | Example | Advantage(s) | Disadvantage(s) |
+|:---:|:---:|:---:|:---:|
+| Nesting | `g(f(x))` | Concise; well-suited for short operations | Hard to read because of inside-outside and left-right order of operations |
+| Intermediate Objects | `obj1 <- f(x); obj2 <- g(obj1)` | Valuable if intermediary objects are valuable in and of themselves; also nice for debugging / actively developing code workflow | Naming required for intermediary objects |
+| Piping | `x %>% f() %>% g()` | Order of operations is more intuitive; no intermediary objects | Only works with linear transformations of a single object; requires a 3^rd^ party package and literacy of that package in code readers |
 
 ## 6.4 Lexical Scoping
 
