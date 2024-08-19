@@ -146,7 +146,65 @@ Can nest functions inside progressively more parentheses pairs or create interme
 
 ## 6.4 Lexical Scoping
 
+"Scoping" = finding value associated with name. R uses "**lexical scoping**" in that it looks for values of names based on how a function is defined, not how it is called in a particular context. There are four primary rules discussed below.
 
+### 6.4.1 Scoping Rule 1: Name Masking
+
+Essentially, names defined _inside_ of function "mask" objects with the same name created outside of the function. So if you have an `x` object and the function internally creates an `x` object, it won't consider your prior `x` object.
+
+However, if an object is named inside of a function but not defined there / supplied to an argument, R will look one level up for an object of that name, all the way--eventually--to the global environment.
+
+### 6.4.2 Scoping Rule 2: Functions vs. Variables
+
+Because functions are just another type of object, the name masking rules apply to functions as well. I.e., if a function is defined inside of another function (and shares a name with a function created outside of the nested one), the internally-created function will be prioritized.
+
+R however does not mix up non-function objects and function objects so if a function and non-function share a name, R will use each correctly.
+
+Note that it is bad practice to name objects (functions or otherwise) identically in your own code because it makes it hard to read / for novices to interpret.
+
+### 6.4.3 Scoping Rule 3: Fresh Start
+
+Each use of a function is done in a completely different environment so that each function will behave predictably (as opposed to potentially being affected by prior uses of the same/other functions).
+
+### 6.4.4 Scoping Rule 4: Dynamic Lookup
+
+R looks for values when the function is **run**, _not_ when it is defined! So you can define a function and then define variables for it to use (see the name masking rule) and when you use the function it should work.
+
+Note that this means you won't actually get an error for typos / issues with your functions until you use them which can be a pain for debugging. Consider `findGlobals()` to identify external dependencies (i.e., unbound symbols) within a function.
+
+### 6.4.5 Exercises
+
+1. What does the following code return? Why? Describe how each of the three `c`'s is interpreted.
+
+```{r 06-scoping_q1}
+#| eval: false
+
+c <- 10
+c(c = c)
+```
+
+[This code should return a named vector of length one. The value should be 10 and the name should be "c". The first `c` invokes the combine function, the `c` on the left of the equal sign specifies the name attribute for the value while the `c` on the right of the equal sign specifies the value bound in the object created above the line with three `c`'s.]{.answer}
+
+2. What are the four principles that govern how R looks for values?
+
+[They are all part of R's "lexical scoping" and they include (1) name masking, (2) functions vs. variables, (3) fresh start, and (4) dynamic lookup]{.answer}
+
+3. What does the following function return? Make a prediction before running the code yourself.
+
+[I think the code will return `202` because it will first square the provided `x`, then add 1, then multiply by 2. In effect the `10` supplied to the largest function (i.e., the one that contains the others) is passed all the way to the deepest function then the code runs from inside to outside. See the 'name masking' lexical scoping rule in particular.]{.answer}
+
+```{r 06-scoping_q3}
+f <- function(x) {
+  f <- function(x) {
+    f <- function() {
+      x ^ 2
+    }
+    f() + 1
+  }
+  f(x) * 2
+}
+f(10)
+```
 
 ## 6.5 Lazy Evaluation
 
