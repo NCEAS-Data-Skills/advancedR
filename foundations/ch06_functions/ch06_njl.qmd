@@ -208,6 +208,112 @@ f(10)
 
 ## 6.5 Lazy Evaluation
 
+Arguments are only evaluated if they are used (i.e., "lazily" evaluated). Useful because you can avoid intense operations unless they are needed.
+
+### 6.5.1 Promises
+
+Lazy evaluation is powered by the "promise" data structure (a.k.a. "thunk"). These have three components: (1) expression that gives rise to delayed computation, (2) environment where expression should be evaluated, and (3) a value which is computed and cached the first time the promise's expression is evaluated in the specified environment.
+
+Promises _cannot_ be interacting with because such interaction would force immediate evaluation.
+
+### 6.5.2 Default Arguments
+
+Default argument values can be set (even in relation to earlier user-specified arguments) because of promises. This is not recommended though because it makes order matter a lot and that is hard to interpret.
+
+Evaluation differs between default and user-specified arguments.
+
+### 6.5.3 Missing Arguments
+
+Missing arguments need to be accounted for using some sort of conditional 'if null then ___' structure. Fortunately, laze evaluation means we don't have to worry about the intensity of the non-null computation because it'll only be used when it's needed.
+
+### 6.5.4 Exercises
+
+1. What important property of `&&` makes `x_ok()` work?
+
+```{r 06-lazy_q1}
+#| eval: false
+
+x_ok <- function(x) {
+  !is.null(x) && length(x) == 1 && x > 0
+}
+
+x_ok(NULL)
+#> [1] FALSE
+x_ok(1)
+#> [1] TRUE
+x_ok(1:3)
+#> [1] FALSE
+```
+
+[It is the left-to-right evaluation of the conditions in `&&` versus `&`. The first and second instances would work the same with either `&` or `&&` but the third one we fail because the `length` is wrong so we don't waste any time checking for whether each element of the vector of `1:3` is greater than 1. See the help file for `&&` for more details.]{.answer}
+
+What is different with this code? Why is this behaviour undesirable here?
+
+```{r 06-lazy_q1-B}
+#| eval: false
+
+x_ok <- function(x) {
+  !is.null(x) & length(x) == 1 & x > 0
+}
+
+x_ok(NULL)
+#> logical(0)
+x_ok(1)
+#> [1] TRUE
+x_ok(1:3)
+#> [1] FALSE FALSE FALSE
+```
+
+[This is undesireable mostly because it means that the length of the _output_ of `x_ok()` now is tied with the length of its inputs. This means that if we wrote a different function with an 'if `x_ok()` is `TRUE` do X, otherwise do Y' conditional that condition would fail if the user specified an `x` of greater than one element.]{.answer}
+
+2. What does this function return? Why? What principle does it illustrate?
+
+[This function should return `100`. It demonstrates lazy evaluation, specifically default arguments. The default value of `x` is `z` which does not exist when the function is invoked but is created _before_ `x` is evaluated (hence no error)]{.answer}
+
+```{r 06-lazy_q2}
+f2 <- function(x = z) {
+  z <- 100
+  x
+}
+f2()
+```
+
+3. What does this function return? Why? Which principle does it illustrate?
+
+[This demonstrates name masking. In effect, the contents of the curly braces (`{...}`), first define the `y` object the function body requires then--after the semicolon--define the `x`. Because R detects both an `x` and a `y`, it never looks for either the value supplied to the `y` argument or the `y` object defined outside of the function. Also, `y` the object outside of the function is unaltered because the function's body operations are performed in a separate argument from where `y` is defined at the start of the code chunk.]{.answer}
+
+```{r 06-lazy_q3}
+y <- 10
+f1 <- function(x = {y <- 1; 2}, y = 0) {
+  c(x, y)
+}
+f1()
+y
+```
+
+4. In `hist()`, the default value of `xlim` is `range(breaks)`, the default value for `breaks` is `"Sturges"`. However, `range("Sturges")` returns a 2-element vector containing "Sturges" twice. Explain how `hist()` works to get a correct `xlim` value.
+
+[`hist()`'s `xlim` argument _must_ receive a 2-element numeric vector. Thus, `hist()` uses reasonable defaults under the hood to ensure that this is the case. During evaluation it overwrites the `breaks` argument to replace "Sturges" with the necessary two-element numeric vector.]{.answer}
+
+5. Explain why this function works. Why is it confusing?
+
+```{r 06-lazy_q5}
+#| eval: false
+show_time <- function(x = stop("Error!")) {
+  stop <- function(...) Sys.time()
+  print(x)
+}
+show_time()
+#> [1] "2021-02-21 19:22:36 UTC"
+```
+
+[Before the `stop` function is accessed (which would normally throw an error), a new function is bound to that name that just prints the system time. Because of name masking, the new `stop` function is accessed instead of the base R `stop` function one might expect. This occurs only because the `x` argument is defined as the error function only as a _default_ but when the function is invoked in the chunk above it uses the internally-defined faux `stop` function.]{.answer}
+
+[This is confusing because if `stop` is called in the function invoking step (e.g., `show_time(x = stop("Error!"))` you would get the error message (because the user-specified value to the argument would take precedence over the `stop` function defined in the `show_time()` body).]{.answer}
+
+6. How many arguments are required when calling `library()`?
+
+[`library` in theory supports 13 arguments (see `length(formals(library))`) but it doesn't _require_ any. Run `library()` to demonstrate this to yourself. See 6.5.3 for more information on handling of missing arguments.]{.answer}
 
 ## 6.6 `...` (Ellipsis)
 
