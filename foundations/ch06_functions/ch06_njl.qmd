@@ -315,8 +315,52 @@ show_time()
 
 [`library` in theory supports 13 arguments (see `length(formals(library))`) but it doesn't _require_ any. Run `library()` to demonstrate this to yourself. See 6.5.3 for more information on handling of missing arguments.]{.answer}
 
-## 6.6 `...` (Ellipsis)
+## 6.6 `...` (dot-dot-dot)
 
+Functions can have a special argument: `...` (pronounced "dot-dot-dot"). Note that I _despise_ this and will be using the actual word ("ellipsis") for three dots for brevity's sake. Regardless of its name, the ellipsis supports any number of additional arguments. These can be used either by the 'top-level' function or passed directly to subordinate functions.
+
+In non-R languages this is sometimes called "varags" (i.e., "variable arguments") and functions that use it are said to be "variadic".
+
+Using `..N` allows for arguments to be accessed via their position (seems risky to me because how could you count on other users--or even future you--to consistently use the same order of arguments?).
+
+Several use-cases (covered in future chapters of the book) but also two primary risks:
+
+1. It's not clear to the user where the arguments passed to `...` _go_. So understanding how to use a function with a `...` argument can be non-trivial
+2. Misspelled arguments are ignored / do not raise errors, so you can get some behaviors that are non-ideal
+
+### 6.6.1 Exercises
+
+1. Explain the following results:
+
+```{r 06-ellipsis_q1}
+#| eval: false
+
+sum(1, 2, 3)
+#> [1] 6
+mean(1, 2, 3)
+#> [1] 1
+
+sum(1, 2, 3, na.omit = TRUE)
+#> [1] 7
+mean(1, 2, 3, na.omit = TRUE)
+#> [1] 1
+```
+
+[`sum()` evidently accepted all three numbers in the `...` argument and added them together. `mean()` interestingly only took the average of the first supplied value (evidently supplied to `...` implicitly). So far as I know, `na.omit` is not an argument supported by either `sum()` or `mean()` (the real argument is `na.rm`) so that argument is functionally 'misspelled' and ignored. If you replace one of the numbers of the second `sum()` example with `NA` you'll see it returns `NA` (not the sum of the remaining/non-missing numbers).]{.answer}
+
+2. Explain how to find the documentation for the named arguments in the following function call:
+
+```{r 06-ellipsis_q2}
+#| eval: false
+
+plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
+```
+
+[The named arugments in the above chunk are all passed to `plot`'s `...` argument. The help file for `plot()` directs us to `par`'s help file which contains documentation for both of those arguments (`pch` is documented under `points`).]{.answer}
+
+3. Why does `plot(1:10, col = "red")` only colour the points, not the axes or labels? Read the source code of `plot.default()` to find out.
+
+[`col` is inherited by the points bit of the source code of `plot.default` (see `View(plot.default)` as a start). Color of other elements can be specified in other ways but that specific argument by default only handles points. This also makes good intuitive sense because you can imagine that changing point colors is probably more common than changing color of other elements of the plot.]{.answer}
 
 ## 6.7 Exiting a Function
 
