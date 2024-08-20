@@ -6,6 +6,22 @@ engine: knitr
 code-overflow: wrap
 ---
 
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
 ## 4.1 Introduction
 
 There are six ways to subset atomic vectors. There are three subsetting operators (`[[`, `[`, and `$`). These operators work differently with different vector types (e.g., lists, matrices, etc.).
@@ -43,6 +59,72 @@ When using a single index (e.g., `df[1:3]`), behavior is similar to that of list
 
 Matrix-like subsetting for a single column (`df[, "x"]`) simplifies dataframes by default while the same subset method for tibbles always returns a tibble. The type of the data is unchanged for both dataframes and tibbles when list-subsetting (`df["x"]`) is used.
 
+### 4.2.6 Exercises
+
+1. Fix each of the following common data frame subsetting errors:
+
+```{r 04-multi-ex_q1}
+#| eval: false
+mtcars[mtcars$cyl = 4, ]
+mtcars[-1:4, ]
+mtcars[mtcars$cyl <= 5]
+mtcars[mtcars$cyl == 4 | 6, ]
+```
+
+[See below]{.answer}
+
+```{r 04-multi-ex_a1}
+#| eval: false 
+
+mtcars[mtcars$cyl == 4, ] # Missing second '='
+mtcars[-1:-4, ] # Mixing positive and negative integers
+mtcars[mtcars$cyl <= 5, ] # missing ',' to indicate we want rows that meet the condition
+mtcars[mtcars$cyl == 4 | mtcars$cyl == 6, ] # Second conditional was malformed / does not evaluate to 'T' or 'F'
+```
+
+2. Why does the following code yield five missing values? (Hint: why is it different from `x[NA_real_]`?)
+
+```{r 04-multi-ex_q2}
+#| eval: false
+
+x <- 1:5
+x[NA]
+```
+
+[The default atomic type of `NA` is logical so it similar to `x[TRUE]` in that each element is evaluated (and returned) separately]{.answer}
+
+3. What does `upper.tri()` return? How does subsetting a matrix with it work? Do we need any additional subsetting rules to describe its behaviour?
+
+```{r 04-multi-ex_q3}
+#| eval: false
+
+x <- outer(1:5, 1:5, FUN = "*")
+x[upper.tri(x)]
+```
+
+[`upper.tri()` returns a matrix of logical values (`T`/`F`) where only the upper "triangle" (i.e., the top right chunk) of the matrix is `TRUE`. We do not need any additional rules to describe this behavior because we already know that matrices can be used to subset data.]{.answer}
+
+4. Why does `mtcars[1:20]` return an error? How does it differ from the similar `mtcars[1:20, ]`?
+
+[There are only 11 columns in `mtcars` (see `ncol(mtcars)`) so we cannot subset columns that don't exist. `mtcars[1:20, ]` works because that is actually for the first twenty _rows_ of the data (and all of the columns) because of the placement of the comma]{.answer}
+
+5. Implement your own function that extracts the diagonal entries from a matrix (it should behave like `diag(x)` where `x` is a matrix).
+
+[I have already done this in my `supportR` R package. See `?supportR::crop_tri` for the help file or `supportR::crop_tri` for the source code]{.answer}
+
+6. What does `df[is.na(df)] <- 0` do? How does it work?
+
+[The above code finds `NA`s in all columns of `df` and replaces them with zeros. It does this because `is.na(df)` returns a matrix of logical values where only the `NA` cells are `TRUE` and all others are `FALSE`. Assigning `0` then replaces only the `TRUE` cells (i.e., the `NA` cells). Intereestingly, `df[is.na(df)]` returns a vector whose length is equal to the number of `NA`s _in all columns of the data object_.]{.answer}
+
+```{r 04-multi-ex_a6}
+df <- data.frame(a = c(1, NA_real_, 2),
+                 b = c(NA_character_, "y", "z"))
+df
+
+df[is.na(df)] <- 0
+df
+```
+
 ## 4.3 Selecting a Single Element
 
 While `[` is useful for selecting one or more elements, `[[` and `$` are useful for extracting a single element (`$` is shorthand for `[[`).
@@ -66,6 +148,37 @@ Useful train metaphor where `x[1]` grabs the whole first train car while `x[[1]]
 ### 4.3.4 `@` and `slot()`
 
 S4 objects also support the `@` operator (equivalent to `$`) and the `slot()` function (equivalent to `[[`). Note that `@` is more restrictive in that it will always return an error when the specified index does not exist.
+
+### 4.3.5 Exercises
+
+1. Brainstorm as many ways as possible to extract the third value from the cyl variable in the mtcars dataset.
+
+[See below]{.answer}
+
+```{r 04-single-ex_a1}
+mtcars$cyl[3]
+mtcars[["cyl"]][3]
+mtcars[3, 2]
+purrr::pluck(.x = mtcars, "cyl", 3)
+purrr::pluck(.x = mtcars, 2, 3)
+purrr::chuck(.x = mtcars, "cyl", 3)
+purrr::chuck(.x = mtcars, 2, 3)
+mtcars[c(-1:-2, -4:-32), c(-1, -3:-11)] # >:)
+```
+
+2. Given a linear model, (e.g., `mod <- lm(mpg ~ wt, data = mtcars)`), extract the residual degrees of freedom. Then extract the R squared from the model summary (`summary(mod)`)
+
+[See below]{.answer}
+
+```{r 04-single-ex_a2}
+mod <- lm(mpg ~ wt, data = mtcars)
+
+mod$df.residual
+mod[["df.residual"]]
+
+summary(mod)$r.squared
+summary(mod)[["r.squared"]]
+```
 
 ## 4.4 Subsetting & Assignment
 
@@ -137,4 +250,38 @@ Conditional subsetting can be done easily with `[`. See exercises for that secti
 x <- 1:6 < 4
 x
 which(x)
+```
+
+### 4.5.9 Applications
+
+1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a1-p1}
+mtcars[sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
+
+[Yes you can permute rows and columns at the same time but it is sort of horrible to look at.]{.answer}
+
+```{r 04-apps-ex_a1-p2}
+mtcars[sample(x = 1:nrow(mtcars), size = nrow(mtcars)), sample(x = 1:ncol(mtcars), size = ncol(mtcars))]
+```
+
+
+2. How would you select a random sample of `m` rows from a data frame? What if the sample had to be contiguous (i.e., with an initial row, a final row, and every row in between)?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a2}
+m <- 3
+mtcars[sample(x = 1:nrow(mtcars), size = m), ]
+```
+
+3. How could you put the columns in a data frame in alphabetical order?
+
+[See below]{.answer}
+
+```{r 04-apps-ex_a3}
+mtcars[order(names(mtcars))]
 ```
