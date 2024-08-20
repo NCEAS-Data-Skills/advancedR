@@ -1,0 +1,37 @@
+---
+title: "Foundations Chapters -- Notes & Exercises"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+```{scss custom_themes, echo=FALSE}
+.answer { 
+  color: #b5179e;
+  font-weight: bolder;
+}
+```
+
+## Chapter 2: Names & Values
+
+{{< include ch02_names_values/ch02_njl.qmd >}}
+
+## Chapter 3: Vectors
+
+{{< include ch03_vectors/ch03_njl.qmd >}}
+
+## Chapter 4: Subsetting
+
+{{< include ch04_subsetting/ch04_njl.qmd >}}
+
+## Chapter 5: Control Flow
+
+{{< include ch05_control_flow/ch05_njl.qmd >}}
+
+## Chapter 6: Functions
+
+{{< include ch06_functions/ch06_njl.qmd >}}
+
+
+

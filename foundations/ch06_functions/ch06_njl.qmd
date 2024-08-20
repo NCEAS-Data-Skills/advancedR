@@ -1,12 +1,5 @@
----
-title: "Chapter 6: Functions -- Notes & Exercises"
-author: "Nick J Lyon"
-format: html
-engine: knitr
-code-overflow: wrap
----
 
-```{r libs}
+```{r 06-libs}
 #| echo: false
 #| message: false
 
@@ -15,22 +8,15 @@ code-overflow: wrap
 librarian::shelf(purrr)
 ```
 
-```{scss custom-themes, echo=FALSE}
-.answer { 
-  color: #560bad;
-  font-weight: bolder;
-}
-```
-
-## 6.2 Function Fundamentals
+### 6.2 Function Fundamentals
 
 Functions are fundamentally composed of (1) arguments, (2) body, and (3) environment. _Except_ primitive functions implemented purely in C.
 
-### 6.2.1 Function Components
+#### 6.2.1 Function Components
 
 Can check arguments, body, and environment with `formals()`, `body()`, and `environment()` respectively.
 
-### 6.2.2 Primitive Functions
+#### 6.2.2 Primitive Functions
 
 Primitive functions have type "builtin" or "special".
 
@@ -41,13 +27,13 @@ typeof(x = `[`)
 
 Primitive functions are faster but at the cost of interpretability (both reading and writing).
 
-### 6.2.3 First-Class Functions
+#### 6.2.3 First-Class Functions
 
 R functions are objects in and of themselves (this is known as "first-class functions"). While some other languages have special conventions for creating functions, R supports simple assignment as with all other objects--albeit with structural requirements for the function to _be_ a function and work as intended.
 
 You can create functions without binding them to a name (resulting in "anonymous functions") or add functions to a list and then invoke them with `list_obj$fxn_name(arguments)`
 
-### 6.2.4 Invoking a Function
+#### 6.2.4 Invoking a Function
 
 You can invoke a function by putting values inside of function parentheses (with or without naming arguments) or by storing the arguments in a data structure and using `do.call()` on that. For example:
 
@@ -57,7 +43,7 @@ args_list <- list(1:10, na.rm = T)
 do.call(what = mean, args = args_list)
 ```
 
-### 6.2.5 Exercises
+#### 6.2.5 Exercises
 
 1. Given a name, like `"mean"`, `match.fun()` lets you find a function. Given a function, can you find its name? Why doesn't this make sense in R?
 
@@ -134,7 +120,7 @@ length(prim_funs)
 
 [Primitive functions and those not from a package (i.e., those created in the global environment), do not display their environment.]{.answer}
 
-## 6.3 Function Composition
+### 6.3 Function Composition
 
 Can nest functions inside progressively more parentheses pairs or create intermediary objects to store results. Can also use `magrittr`'s `%>%` to chain together operations.
 
@@ -144,17 +130,17 @@ Can nest functions inside progressively more parentheses pairs or create interme
 | Intermediate Objects | `obj1 <- f(x); obj2 <- g(obj1)` | Valuable if intermediary objects are valuable in and of themselves; also nice for debugging / actively developing code workflow | Naming required for intermediary objects |
 | Piping | `x %>% f() %>% g()` | Order of operations is more intuitive; no intermediary objects | Only works with linear transformations of a single object; requires a 3^rd^ party package and literacy of that package in code readers |
 
-## 6.4 Lexical Scoping
+### 6.4 Lexical Scoping
 
 "Scoping" = finding value associated with name. R uses "**lexical scoping**" in that it looks for values of names based on how a function is defined, not how it is called in a particular context. There are four primary rules discussed below.
 
-### 6.4.1 Scoping Rule 1: Name Masking
+#### 6.4.1 Scoping Rule 1: Name Masking
 
 Essentially, names defined _inside_ of function "mask" objects with the same name created outside of the function. So if you have an `x` object and the function internally creates an `x` object, it won't consider your prior `x` object.
 
 However, if an object is named inside of a function but not defined there / supplied to an argument, R will look one level up for an object of that name, all the way--eventually--to the global environment.
 
-### 6.4.2 Scoping Rule 2: Functions vs. Variables
+#### 6.4.2 Scoping Rule 2: Functions vs. Variables
 
 Because functions are just another type of object, the name masking rules apply to functions as well. I.e., if a function is defined inside of another function (and shares a name with a function created outside of the nested one), the internally-created function will be prioritized.
 
@@ -162,17 +148,17 @@ R however does not mix up non-function objects and function objects so if a func
 
 Note that it is bad practice to name objects (functions or otherwise) identically in your own code because it makes it hard to read / for novices to interpret.
 
-### 6.4.3 Scoping Rule 3: Fresh Start
+#### 6.4.3 Scoping Rule 3: Fresh Start
 
 Each use of a function is done in a completely different environment so that each function will behave predictably (as opposed to potentially being affected by prior uses of the same/other functions).
 
-### 6.4.4 Scoping Rule 4: Dynamic Lookup
+#### 6.4.4 Scoping Rule 4: Dynamic Lookup
 
 R looks for values when the function is **run**, _not_ when it is defined! So you can define a function and then define variables for it to use (see the name masking rule) and when you use the function it should work.
 
 Note that this means you won't actually get an error for typos / issues with your functions until you use them which can be a pain for debugging. Consider `findGlobals()` to identify external dependencies (i.e., unbound symbols) within a function.
 
-### 6.4.5 Exercises
+#### 6.4.5 Exercises
 
 1. What does the following code return? Why? Describe how each of the three `c`'s is interpreted.
 
@@ -206,27 +192,27 @@ f <- function(x) {
 f(10)
 ```
 
-## 6.5 Lazy Evaluation
+### 6.5 Lazy Evaluation
 
 Arguments are only evaluated if they are used (i.e., "lazily" evaluated). Useful because you can avoid intense operations unless they are needed.
 
-### 6.5.1 Promises
+#### 6.5.1 Promises
 
 Lazy evaluation is powered by the "promise" data structure (a.k.a. "thunk"). These have three components: (1) expression that gives rise to delayed computation, (2) environment where expression should be evaluated, and (3) a value which is computed and cached the first time the promise's expression is evaluated in the specified environment.
 
 Promises _cannot_ be interacting with because such interaction would force immediate evaluation.
 
-### 6.5.2 Default Arguments
+#### 6.5.2 Default Arguments
 
 Default argument values can be set (even in relation to earlier user-specified arguments) because of promises. This is not recommended though because it makes order matter a lot and that is hard to interpret.
 
 Evaluation differs between default and user-specified arguments.
 
-### 6.5.3 Missing Arguments
+#### 6.5.3 Missing Arguments
 
 Missing arguments need to be accounted for using some sort of conditional 'if null then ___' structure. Fortunately, laze evaluation means we don't have to worry about the intensity of the non-null computation because it'll only be used when it's needed.
 
-### 6.5.4 Exercises
+#### 6.5.4 Exercises
 
 1. What important property of `&&` makes `x_ok()` work?
 
@@ -315,7 +301,7 @@ show_time()
 
 [`library` in theory supports 13 arguments (see `length(formals(library))`) but it doesn't _require_ any. Run `library()` to demonstrate this to yourself. See 6.5.3 for more information on handling of missing arguments.]{.answer}
 
-## 6.6 `...` (dot-dot-dot)
+### 6.6 `...` (dot-dot-dot)
 
 Functions can have a special argument: `...` (pronounced "dot-dot-dot"). Note that I _despise_ this and will be using the actual word ("ellipsis") for three dots for brevity's sake. Regardless of its name, the ellipsis supports any number of additional arguments. These can be used either by the 'top-level' function or passed directly to subordinate functions.
 
@@ -328,7 +314,7 @@ Several use-cases (covered in future chapters of the book) but also two primary 
 1. It's not clear to the user where the arguments passed to `...` _go_. So understanding how to use a function with a `...` argument can be non-trivial
 2. Misspelled arguments are ignored / do not raise errors, so you can get some behaviors that are non-ideal
 
-### 6.6.1 Exercises
+#### 6.6.1 Exercises
 
 1. Explain the following results:
 
@@ -362,29 +348,29 @@ plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
 
 [`col` is inherited by the points bit of the source code of `plot.default` (see `View(plot.default)` as a start). Color of other elements can be specified in other ways but that specific argument by default only handles points. This also makes good intuitive sense because you can imagine that changing point colors is probably more common than changing color of other elements of the plot.]{.answer}
 
-## 6.7 Exiting a Function
+### 6.7 Exiting a Function
 
 Most functions end either by returning a value or an error.
 
-### 6.7.1 Implicit vs. Explicit Returns
+#### 6.7.1 Implicit vs. Explicit Returns
 
 Implicit returns are just whatever the final value of the function happens to be. Explicit returns are those identified by `return()`.
 
-### 6.7.2 Invisible Values
+#### 6.7.2 Invisible Values
 
 You can prevent visible returning by wrapping the returned value in `invisible()`. More commonly, assigning the product of a function using `<-` means that the returned value is returned invisibly (i.e., only bound to that name and not printed in the Console).
 
-### 6.7.3 Errors
+#### 6.7.3 Errors
 
 When functions cannot finish their task(s), they should return an error defined with `stop()`. More information on errors in Chapter 8.
 
-### 6.7.4 Exit Handlers
+#### 6.7.4 Exit Handlers
 
 Content included in `on.exit()` is run whether the function succeeds or throws an error. It essentially requires the `add = T` argument.
 
 A valuable use-case is the setting of a working directory/global options in the function followed by re-setting to them to their original values at the end of the function (necessary to make this work as desired whether or not function succeeds).
 
-### 6.7.5 Exercises
+#### 6.7.5 Exercises
 
 1. What does `load()` return? Why don't you normally see these values?
 
@@ -423,7 +409,7 @@ capture.output2(cat("a", "b", "c", sep = "\n"))
 
 [`capture.output()` has more appropriate error checks / handling but is longer because of this. Also, `capture.output()` uses `print()` instead of `readLines()` for the output so it will likely show different things in certain contexts.]{.answer}
 
-## 6.8 Function Forms
+### 6.8 Function Forms
 
 Four flavors of function call:
 
@@ -432,7 +418,7 @@ Four flavors of function call:
 3. **replacement** -- functions that replace values via assignment (e.g., `names(x) <- c("one", "two")`)
 4. **special** -- functions like `[[`, `for`, etc. Despite not having consistent structure, they are important.
 
-### 6.8.1 Rewriting in Prefix Form
+#### 6.8.1 Rewriting in Prefix Form
 
 Functions of all types can be re-written in prefix form. Simply wrap the function name in backticks and then put the normal contents in parentheses after the name. For example: 
 
@@ -440,27 +426,27 @@ Functions of all types can be re-written in prefix form. Simply wrap the functio
 `for`(i, 1:3, print(i))
 ```
 
-### 6.8.2 Prefix Functions
+#### 6.8.2 Prefix Functions
 
 Most common type in R and extremely common in majority of programming languages. Arguments can be specified by their order, partial matches to argument names, or by their full argument name.
 
 Never use partial matching but you can use positional specification for the first one or two arguments (in Hadley Wickham's opinion; I _never_ use positional specification because I think it impedes learning for yourself / others).
 
-### 6.8.3 Infix Functions
+#### 6.8.3 Infix Functions
 
 Name comes from function being between ("inside") arguments. `+` and `-` are special cases of the infix function form because they support being called with only a right-hand side argument (i.e., to explicitly make numbers negative/positive).
 
-### 6.8.4 Replacement Functions
+#### 6.8.4 Replacement Functions
 
 Work by putting function call to the left of the `<-` (e.g., `names(x) <- "a"`). They _act_ like they modify their arguments in place but in reality they create a modified copy (can confirm with `tracemem()`).
 
-### 6.8.5 Special Functions
+#### 6.8.5 Special Functions
 
 This section has several 'fun facts' but they render a lot of really important functions (e.g., `[[`, `(`, etc.) very difficult to read/interpret so I'm not seeing a good use-case.
 
 All special functions are implemented as primitive (i.e., C) functions so printing them is not informative.
 
-### 6.8.6 Exercises
+#### 6.8.6 Exercises
 
 1. Rewrite the following code snippets into prefix form:
 

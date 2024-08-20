@@ -1,12 +1,5 @@
----
-title: "Chapter 5: Control Flow -- Notes & Exercises"
-author: "Nick J Lyon"
-format: html
-engine: knitr
-code-overflow: wrap
----
 
-```{r libs}
+```{r 05-libs}
 #| echo: false
 #| message: false
 
@@ -15,14 +8,7 @@ code-overflow: wrap
 librarian::shelf(purrr)
 ```
 
-```{scss custom-themes, echo=FALSE}
-.answer { 
-  color: #560bad;
-  font-weight: bolder;
-}
-```
-
-## 5.2 Choices
+### 5.2 Choices
 
 Basic form `if` in R is as follows:
 
@@ -36,17 +22,17 @@ If either the `if` or `else` actions require multiple steps they are wrapped in 
 
 `if` without a clear "false action" invisibly returns `NULL` when the condition is not met.
 
-### 5.2.1 Invalid Inputs
+#### 5.2.1 Invalid Inputs
 
 `if` must evaluate to `TRUE` or `FALSE` to work (so non-logical values and/or missing values cause errors). Vectors of greater than length 1 return a warning and `if` only evaluates the first element.
 
-### 5.2.2 Vectorized `if`
+#### 5.2.2 Vectorized `if`
 
 If you have multiple elements and want `if` to act on each (separately) you can use `ifelse` which looks more like a standard function (in that it has clearly-defined arguments). Note that `ifelse` should only be used when both the `yes` and `no` outputs are the same type because otherwise the output can be tough to predict.
 
 `dplyr::case_when` is an alternative to `ifelse` that can handle any number of condition vector pairs.
 
-### 5.2.3 `switch()` Statements
+#### 5.2.3 `switch()` Statements
 
 `switch()` is a compact replacement for code with many `else if` alternates. For instance, the following two code chunks are equivalent.
 
@@ -77,7 +63,7 @@ switch(x,
 
 **Note that the final component of `switch` _must_ throw an error.**
 
-### 5.2.4 Exercises
+#### 5.2.4 Exercises
 
 1. What type of vector does each of the following calls to `ifelse()` return?
 
@@ -111,11 +97,11 @@ if (length(x)) "not empty" else "empty"
 
 [Because `length()` returns an integer so the condition actually being evaluated by `if` is essentially 'is this number any non-zero number (i.e., `TRUE`) or zero (i.e., `FALSE`)?' The length of an empty vector (as in the second case) is zero so the 'false action' is performed.]{.answer}
 
-## 5.3 Loops
+### 5.3 Loops
 
 One iteration of a loop can be skipped with `next` or the entire loop can be exited with `break`.
 
-### 5.3.1 Common Pitfalls
+#### 5.3.1 Common Pitfalls
 
 | **Issue** | **Solution** |
 |:---:|:---:|
@@ -123,7 +109,7 @@ One iteration of a loop can be skipped with `next` or the entire loop can be exi
 | `1:length(x)` behaves unexpectedly when `x` has length 0 | use `seq_along(x)` instead |
 | S3 vectors defined by their attributes (e.g., Dates, etc.) getting stripped to atomic core by loop | Work around by using `[[` yourself (e.g., `x[[i]]`) |
 
-### 5.3.2 Related Tools
+#### 5.3.2 Related Tools
 
 `while` loops go until their condition is no longer `TRUE`. `repeat` loops go until they encounter a `break`. `for` loops can be re-written as `while` loops which themselves can be modified into `repeat` loops but the reverse is not true. This means that in terms of flexibility, `for` loops are the least flexible, `while`s are slightly more flexible, and `repeat`s are the most flexible.
 
@@ -131,7 +117,7 @@ _Wild_ quote that I'm interested to learn more about:
 
 > "Generally speaking <u>you shouldn't need to use for loops for data analysis tasks</u>, as `map()` and `apply()` already provide less flexible solutions to most problems. You'll learn more in Chapter 9." _\[Emphasis mine\]_
 
-### 5.3.3 Exercises
+#### 5.3.3 Exercises
 
 1. Why does this code succeed without errors or warnings?
 

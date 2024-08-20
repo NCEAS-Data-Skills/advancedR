@@ -1,12 +1,5 @@
----
-title: "Chapter 3: Vectors -- Notes"
-author: "Nick J Lyon"
-format: html
-engine: knitr
-code-overflow: wrap
----
 
-```{r libs}
+```{r 03-libs}
 #| echo: false
 #| message: false
 
@@ -15,18 +8,11 @@ code-overflow: wrap
 librarian::shelf(lobstr, bench)
 ```
 
-```{scss custom-themes, echo=FALSE}
-.answer { 
-  color: #560bad;
-  font-weight: bolder;
-}
-```
-
-## 3.2 Atomic Vectors
+### 3.2 Atomic Vectors
 
 Four primary types of atomic vectors: (1) character, (2) logical, (3) integer, (4) double. Collectively integer and double vectors are known as "numeric" vectors. Atomic vectors can instead be "complex" or "raw" but these are rare and undiscussed in this book due to that rarity.
 
-### 3.2.1 Scalars
+#### 3.2.1 Scalars
 
 Each of the four primary atomic vector types has a unique syntax for creating an individual value called a **scalar**.
 
@@ -37,13 +23,13 @@ Each of the four primary atomic vector types has a unique syntax for creating an
     - Special characters can be escaped with a back slash (`\`)
     - See `?Quotes` for more info
 
-### 3.2.2 `c()`
+#### 3.2.2 `c()`
 
 Smaller vectors can be combined into larger ones with `c()`. This function also "flattens" inputs so it always returns an atomic vector (so long as its inputs are atomic vectors).
 
 The number of elements in a vector can be assessed with `length()` and the class attribute can be checked with `class()` or `typeof()`
 
-### 3.2.3 Missing Values
+#### 3.2.3 Missing Values
 
 There is a special sentinel value in R: `NA` ("not applicable"). These are infectious in that most operations involving an `NA` return `NA`. The exception to this is when the non-`NA` value contains all of the information needed to deduce the result (e.g., `NA | T` returns `T`).
 
@@ -51,7 +37,7 @@ There is a special sentinel value in R: `NA` ("not applicable"). These are infec
 
 Note that technically each atomic vector type has its own corresponding `NA` type (`NA`, `NA_real_`, `NA_integer_`, `NA_character_`) but this is largely irrelevant to practical coding because `NA` is coerced to the needed type as/if needed.
 
-### 3.2.4 Testing & Coercion
+#### 3.2.4 Testing & Coercion
 
 You can test the type of a given vector using the corresponding `is.*()` function. However, remember that `is.integer()` will return `FALSE` for a double vector containing only non-fractions (because numbers need a `L` appended to count as truly integers).
 
@@ -59,7 +45,7 @@ For atomic vectors, type is a property of the entire vector so when atomic vecto
 
 You can force coercion with the corresponding `as.*()` function. Failed coercion of individual elements of a vector results in a warning message and an `NA` in that position.
 
-## 3.2.5 Exercises
+#### 3.2.5 Exercises
 
 1. How do you create raw and complex scalars? (See `?raw` and `?complex`.)
 
@@ -100,23 +86,23 @@ c(TRUE, 1L)
 
 [`is.vector()` tests for vectors that have no attributes other than names. Note this means that `is.vector()` would return `FALSE` for a "vector" of class "factor" because the levels are an attribute other than names]{.answer}
 
-## 3.3 Attributes
+### 3.3 Attributes
 
 Attributes are--essentially--metadata that can be attached directly to a given object. 
 
-### 3.3.1 Getting & Setting
+#### 3.3.1 Getting & Setting
 
 Individual attributes can be (A) retrieved _and_ set with `attr()`, (B) retrieved _only_ en masse with `attributes()` or (C), set _only_ en masse with `structure()`.
 
 **Attributes are (mostly) ephemeral** (i.e., they are lost by most operations). The two exceptions are (1) the "names" attributes and (2) the "dim" attribute.
 
-### 3.3.2 Names
+#### 3.3.2 Names
 
 You can create names (1) when you create the vector, (2) using `names()`, or (3) inline with `setNames()`. Names can be removed with `unname()` or by setting the names attribute to `NULL` (like so: `names(x) <- NULL`).
 
 Useful names should be unique and not be missing but that is not enforced by R. If _all_ names are missing, `names()` returns `NULL`.
 
-### 3.3.3 Dimensions
+#### 3.3.3 Dimensions
 
 Dimensions can be specified to make vectors behave like matrices or arrays. Many functions for working with vectors have generalizations for matrices/arrays. See below:
 
@@ -128,7 +114,7 @@ Dimensions can be specified to make vectors behave like matrices or arrays. Many
 | - | `t()` | `aperm()` |
 | `is.null(dim())` | `is.matrix()` | `is.array()` |
 
-### 3.3.4 Exercises
+#### 3.3.4 Exercises
 
 1. How is `setNames()` implemented? How is `unname()` implemented? Read the source code.
 
@@ -159,11 +145,11 @@ But when you print that object you don’t see the comment attribute. Why? Is th
 
 [I think two facets prevent the comment attribute from being displayed. First, I think most attributes are not printed by default. Second, I think `structure()` is just for _setting_ attributes. If you want to retrieve/view attributs creates by `structure()` you need to use `attributes()` or `attr()`. As an afterthought, could be that we're not binding it to an object?]{.answer}
 
-## 3.4 S3 Atomic Vectors
+### 3.4 S3 Atomic Vectors
 
 The "class" attribute is one of the most important and it underpins the S3 object system. Simply having a class attribute makes an object an S3 object. This chapter covers four in particular: **factors** (i.e., categorical data with ordered levels), **Date** (must have resolution to particular days), **POSIXct** (with second/sub-second resolution), and  durations (stored as **difftime** vectors).
 
-### 3.4.1 Factors
+#### 3.4.1 Factors
 
 Factors are special integer vectors with a `class` attribute of "factor" and a `levels` attribute to define the set of allowable values. See an example below:
 
@@ -180,21 +166,21 @@ Ordered factors (created by `ordered()`) are a sub-type of factors that--as one 
 
 Factors are common in base R because a lot of the data import functions (e.g., `read.csv()`) automatically coerce character vectors to factors. This is potentially risky because they do not "know" the full set of levels that are _possible_, only those that are actually in the data. It is preferable to suppress this behavior with `stringsAsFactors = F` and then manually define factors _post hoc_.
 
-### 3.4.2 Dates
+#### 3.4.2 Dates
 
 Dates are built on top of double vectors. They have only a class attribute. The value of the double is the **days** since January 1^st^, 1970.
 
-### 3.4.3 Date-Times
+#### 3.4.3 Date-Times
 
 POSIX stands for <u>P</u>ortable <u>O</u>perating <u>S</u>ystem <u>I</u>nterface. The "ct" comes from "calendar time" and the "lt" comes from "local time".
 
 Date-times are built on top of double vectors. They have a class attribute and a "tzone" attribute for the time zone. The value of the double is the **seconds** since January 1^st^, 1970.
 
-### 3.4.4 Durations
+#### 3.4.4 Durations
 
 Difftimes are also built on top of doubles and their duration is the difference between two dates/date-times. They have a "units" attribute to define how that number should be interpreted.
 
-### 3.4.5 Exercises
+#### 3.4.5 Exercises
 
 1. What sort of object does `table()` return? What is its type? What attributes does it have? How does the dimensionality change as you tabulate more variables?
 
@@ -235,23 +221,23 @@ f3 <- factor(letters, levels = rev(letters))
 
 [`f3` differs from `f1` because its _values_ are in the reverse order of those of `f1`. This means that the level-to-integer coercion would work in the same way for both vectors but the order of those elements in the vector would be opposite.]{.answer}
 
-## 3.5 Lists
+### 3.5 Lists
 
-### 3.5.1 Creating
+#### 3.5.1 Creating
 
 You can create a list with `list()`. Recall (from chapter 2) that because list elements are actually _references_ to objects--as opposed to the objects themselves--the overall size of a given list is often smaller than you might expect (i.e., if a list has four elements and each is the same data object, the total size of the list will be only marginally more than a single copy of the original data object). Lists are sometimes called **recursive vectors** because lists can contain other lists. 
 
 Lists can be combined with one another using `c()`. If `c()` is given a combination of lists and atomic vectors, it will coerce everything to lists before combining.
 
-### 3.5.2 Testing & Coercion
+#### 3.5.2 Testing & Coercion
 
 You can use `is.list()` and `as.list()` to get the type of a list ("list") and coerce an object to a list respectively.
 
-### 3.5.3 Matrices & Arrays
+#### 3.5.3 Matrices & Arrays
 
 With vectors, the dimension attribute creates matrices/arrays. With lists, that attribute creates list-matrices and list-arrays.
 
-### 3.5.4 Exercises
+#### 3.5.4 Exercises
 
 1. List all the ways that a list differs from an atomic vector.
 
@@ -278,11 +264,11 @@ z
 class(z)
 ```
 
-## 3.6 Dataframes & Tibbles
+### 3.6 Dataframes & Tibbles
 
 A data frame is a named list of vectors with attributes for column and row names (`names` and `row.names` respectively) and S3 class "data.frame". Unlike other lists, <u>all vectors in a dataframe must be the same length</u>. Dataframes are an important part of what makes R distinct from other programming languages. They are however 20+ years old and are not exactly what people want/need now. Tibbles are the modern reimagining of dataframes.
 
-### 3.6.1 Creating
+#### 3.6.1 Creating
 
 Can be made with `data.frame()` and `tibble()` respectively. Note that tibbles _do not_ automatically convert non-syntactic names nor do they coerce characters into factors (while dataframes do on both counts). Tibbles _do_ surround non-syntactic names with backticks though.
 
@@ -290,7 +276,7 @@ Dataframes and tibbles both recycle inputs that are too short. Importantly tibbl
 
 Finally, tibbles allow you to refer to objects created during construction.
 
-### 3.6.2 Row Names
+#### 3.6.2 Row Names
 
 Dataframes allow you to name each row with a character vector containing only unique values. These can be used to subset the data. However, they are a bad idea for three reasons:
 
@@ -300,11 +286,11 @@ Dataframes allow you to name each row with a character vector containing only un
 
 Tibbles do not support row names.
 
-### 3.6.3 Printing
+#### 3.6.3 Printing
 
 Tibbles only print 10 rows and only the columns that will fit on screen (sometimes abbreviated). Remaining/unabbreviated column names are printed below the 10 rows. Color is used in printing (in the Console) to highlight certain facets of information.
 
-### 3.6.4 Subsetting
+#### 3.6.4 Subsetting
 
 Dataframe subsetting has two undesireable--in Hadley's opinion--features:
 
@@ -313,19 +299,19 @@ Dataframe subsetting has two undesireable--in Hadley's opinion--features:
 
 Tibbles don't do either of these things (i.e., always return another tibble and print a warning if searching for a column that doesn't appear to exist).
 
-### 3.6.5 Testing & Coercing
+#### 3.6.5 Testing & Coercing
 
 Same as other data types: `is.data.frame()`, `as.data.frame()`, `is.tibble`, and `as.tibble`.
 
-### 3.6.6 List Columns
+#### 3.6.6 List Columns
 
 Dataframes and tibbles support columns that are lists (because a dataframe is a list of vectors and can therefore contain other lists). Tibbles print them more cleanly
 
-### 3.6.7 Matrix & Dataframe Columns
+#### 3.6.7 Matrix & Dataframe Columns
 
 Matrix columns in a dataframe are also supported but the `NROW()` must be equal to the `length()`.
 
-### 3.6.8 Exercises
+#### 3.6.8 Exercises
 
 1. Can you have a data frame with zero rows? What about zero columns?
 
@@ -362,7 +348,7 @@ as.matrix(df)
 data.matrix(df)
 ```
 
-## 3.7 `NULL`
+### 3.7 `NULL`
 
 `NULL` is a special data type that is always length 0 and cannot support attributes. It can be tested for with `is.null()`. `NULL` is also returned by using `c()` without supplying anything to the parentheses (representing an empty vector).
 
