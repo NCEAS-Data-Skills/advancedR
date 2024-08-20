@@ -1,0 +1,58 @@
+/*-- scss:defaults --*/
+
+// Colors
+/* source: https://coolors.co/palettes/trending */
+$brown: #562c2c;
+$orange: #f2542d;
+$tan: #f5dfbb;
+$turq-1: #0e9594;
+$turq-2: #127475;
+
+$url-blue: #01BAEF;
+
+$cream: #F4F3EE;
+$gray-0: #d6d6d6;
+$gray-1: #BCB8B1;
+$gray-2: #8A817C;
+$gray-3: #222823;
+$gray-4: #191919;
+$black: #08090A;
+
+// Fonts
+$font-size: 25px;
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300&family=Open+Sans:wght@300&display=swap');
+
+// Base document colors
+$navbar-bg: $turq-2; // navbar
+$navbar-fg: $tan; // navbar foreground elements
+$navbar-hl: $tan; // highlight color when on a page
+$body-bg: $cream; // page background
+$body-color: $black; // page text
+$footer-bg: $orange; // footer
+$link-color: $url-blue; // hyperlinks
+
+// Inline code
+$code-bg: $gray-0; // inline code background color
+$code-color: $turq-2; // inline code text color
+
+// Code blocks
+$code-block-bg: $tan; // code block background color
+
+/*-- scss:rules --*/
+
+// Code chunk ouput
+pre code:not(.sourceCode) { background-color: #FFF; }
+
+// Active tabset panel (tab then tab content)
+.nav-tabs .nav-link.active {
+  background-color: #FFF;
+  color: $black;
+}
+.tab-content { background-color:  #FFF; }
+
+// Navbar dropdown elements
+.dropdown-menu{
+  --bs-dropdown-link-hover-color: #F4F3EE;
+  --bs-dropdown-link-hover-bg: #f2542d;
+}

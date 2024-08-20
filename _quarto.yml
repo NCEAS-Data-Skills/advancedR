@@ -1,0 +1,38 @@
+project:
+  type: website
+  execute-dir: project
+  output-dir: docs
+  render: 
+    - index.qmd
+    - foundations/foundations_njl.qmd
+
+execute:
+  freeze: auto
+
+website:
+  title: "NCEAS Data Skills Group - Advanced R"
+  repo-url: https://github.com/NCEAS-Data-Skills/advancedR
+  repo-actions: [issue]
+  navbar:
+    background: primary
+    left:
+      - text: "Foundations"
+        menu: 
+          - text: "Lyon Notes"
+            href: foundations/foundations_njl.qmd
+    right:
+      - icon: github
+        href: https://github.com/NCEAS-Data-Skills/advancedR
+  page-footer:
+    center: "Copyright 2024, NCEAS"
+    background: secondary
+
+format:
+  html:
+    theme:
+      light: theme_light.scss
+      dark: theme_dark.scss
+    mainfont: Open Sans
+    toc: true
+    link-external-newwindow: true
+    link-external-icon: false

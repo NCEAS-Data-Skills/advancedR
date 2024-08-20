@@ -58,3 +58,7 @@ rsconnect/
 
 # images from Rachel's exercises
 foundations/ch02_names_values/advancedR_exercise_rak*
+
+# Quarto website stuff
+/.quarto/
+_freeze/
