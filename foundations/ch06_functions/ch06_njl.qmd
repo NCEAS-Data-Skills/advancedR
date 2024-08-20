@@ -425,9 +425,190 @@ capture.output2(cat("a", "b", "c", sep = "\n"))
 
 ## 6.8 Function Forms
 
+Four flavors of function call:
 
+1. **prefix** -- function name before its arguments (e.g., `fxn(a, b)`)
+2. **infix** -- function name comes _between_ its arguments (e.g., `x + y`)
+3. **replacement** -- functions that replace values via assignment (e.g., `names(x) <- c("one", "two")`)
+4. **special** -- functions like `[[`, `for`, etc. Despite not having consistent structure, they are important.
 
+### 6.8.1 Rewriting in Prefix Form
 
+Functions of all types can be re-written in prefix form. Simply wrap the function name in backticks and then put the normal contents in parentheses after the name. For example: 
 
+```{r 06-forms-prefix-rewrite}
+`for`(i, 1:3, print(i))
+```
 
+### 6.8.2 Prefix Functions
+
+Most common type in R and extremely common in majority of programming languages. Arguments can be specified by their order, partial matches to argument names, or by their full argument name.
+
+Never use partial matching but you can use positional specification for the first one or two arguments (in Hadley Wickham's opinion; I _never_ use positional specification because I think it impedes learning for yourself / others).
+
+### 6.8.3 Infix Functions
+
+Name comes from function being between ("inside") arguments. `+` and `-` are special cases of the infix function form because they support being called with only a right-hand side argument (i.e., to explicitly make numbers negative/positive).
+
+### 6.8.4 Replacement Functions
+
+Work by putting function call to the left of the `<-` (e.g., `names(x) <- "a"`). They _act_ like they modify their arguments in place but in reality they create a modified copy (can confirm with `tracemem()`).
+
+### 6.8.5 Special Functions
+
+This section has several 'fun facts' but they render a lot of really important functions (e.g., `[[`, `(`, etc.) very difficult to read/interpret so I'm not seeing a good use-case.
+
+All special functions are implemented as primitive (i.e., C) functions so printing them is not informative.
+
+### 6.8.6 Exercises
+
+1. Rewrite the following code snippets into prefix form:
+
+```{r 06-forms_q1}
+#| eval: false
+
+1 + 2 + 3
+
+1 + (2 + 3)
+
+if (length(x) <= 5) x[[5]] else x[[n]]
+```
+
+[See below]{.answer}
+
+```{r 06-forms_a1}
+#| eval: false
+
+`+`(1, `+`(2, 3))
+
+`+`(1, `+`(2, 3))
+
+`if`(`<=`(length(x), 5), `[[`(x, 5), `[[`(x, n))
+```
+
+2. Clarify the following list of odd function calls
+
+```{r 06-forms_q2}
+x <- sample(replace = TRUE, 20, x = c(1:10, NA))
+y <- runif(min = 0, max = 1, 20)
+cor(m = "k", y = y, u = "p", x = x)
+```
+
+[The issue is that a mix of argument position, argument name, and argument partial name match are being used. We can clarify this by standardizing position and naming all arguments. See below.]{.answer}
+
+```{r 06-forms_a2}
+x <- sample(x = c(1:10, NA), size = 20, replace = TRUE)
+y <- runif(n = 20, min = 0, max = 1)
+cor(x = x, y = y, use = "pairwise.complete.obs", method = "kendall")
+```
+
+3. Explain why the following code fails:
+
+```{r 06-forms_q3}
+#| eval: false
+
+modify(get("x"), 1) <- 10
+#> Error: target of assignment expands to non-language object
+```
+
+[Because `modify` is not a replacement function so when R tries to transform it to `modify<-` it finds no corresponding function/object.]{.answer}
+
+4. Create a replacement function that modifies a random location in a vector.
+
+[See below]{.answer}
+
+```{r 06-forms_a4}
+# Define function
+`tweak<-` <- function(x, value){
+  
+  x[sample(x = length(x), size = 1)] <- value
+  
+   return(x) }
+
+# Showcase the function
+for(i in 1:4){
+  
+  # Make the vector
+  my_vec <- c(1:10)
+
+  # Tweak it
+  tweak(my_vec) <- "HELLO"
+  
+  # Print it
+  print(my_vec) }
+```
+
+5. Write your own version of `+` that pastes its inputs together if they are character vectors but behaves as usual otherwise. In other words, make this code work:
+
+```{r 06-forms_q5}
+#| eval: false
+1 + 2
+#> [1] 3
+
+"a" + "b"
+#> [1] "ab"
+```
+
+[See below]{.answer}
+
+```{r 06-forms_a5}
+# Define function
+`%concat%` <- function(p, q){
+  if(all(is.numeric(p), is.numeric(q)) == T) {
+    
+    sum(p, q)
+    
+  } else { paste0(p, q) }
+}
+
+# Invoke function
+1 %concat% 2
+"a" %concat% "b"
+"a" %concat% 2
+```
+
+6. Create a list of all the replacement functions found in the base package. Which ones are primitive functions? (Hint: use `apropos()`.)
+
+[There are 78 replacement functions and 64 of them are primitive functions. See below]{.answer}
+
+```{r 06-forms_a6}
+replace_fxns <- apropos(what = "<-", where = T, mode = "function")
+length(replace_fxns)
+
+replace_prims <- replace_fxns[names(replace_fxns) == length(search())]
+length(replace_prims)
+```
+
+7. What are valid names for user-created infix functions?
+
+[Anything wrapped in `%` (though not `%%%`).]{.answer}
+
+8. Create an infix `xor()` operator.
+
+[See below]{.answer}
+
+```{r 06-forms_a8}
+`%or%` <- function(p, q)(
+  xor(p, q)
+)
+
+T %or% F
+F %or% F
+```
+
+9. Create infix versions of the set functions `intersect()`, `union()`, and `setdiff()`. You might call them `%n%`, `%u%`, and `%/%` to match conventions from mathematics.
+
+[See below]{.answer}
+
+```{r 06-forms_a9}
+`%n%` <- function(p, q){ base::intersect(x = p, y = q) }
+`%u%` <- function(p, q){ base::union(x = p, y = q) }
+`%/%` <- function(p, q){ base::setdiff(x = p, y = q) }
+
+x <- 1:4; y <- 3:7
+
+x %n% y
+x %u% y
+x %/% y
+```
 
