@@ -364,7 +364,64 @@ plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
 
 ## 6.7 Exiting a Function
 
+Most functions end either by returning a value or an error.
 
+### 6.7.1 Implicit vs. Explicit Returns
+
+Implicit returns are just whatever the final value of the function happens to be. Explicit returns are those identified by `return()`.
+
+### 6.7.2 Invisible Values
+
+You can prevent visible returning by wrapping the returned value in `invisible()`. More commonly, assigning the product of a function using `<-` means that the returned value is returned invisibly (i.e., only bound to that name and not printed in the Console).
+
+### 6.7.3 Errors
+
+When functions cannot finish their task(s), they should return an error defined with `stop()`. More information on errors in Chapter 8.
+
+### 6.7.4 Exit Handlers
+
+Content included in `on.exit()` is run whether the function succeeds or throws an error. It essentially requires the `add = T` argument.
+
+A valuable use-case is the setting of a working directory/global options in the function followed by re-setting to them to their original values at the end of the function (necessary to make this work as desired whether or not function succeeds).
+
+### 6.7.5 Exercises
+
+1. What does `load()` return? Why don't you normally see these values?
+
+[`load()` returns objects stored as external files by `save()`. We don't see these values because they are returned invisibly by default]{.answer}
+
+2. What does `write.table()` return? What would be more useful?
+
+[The function returns `NULL` (it's called for its side-effect of saving files to your computer I think). Arguably it would be more useful if it returned the data to be saved so you could save intermediary outputs while continuing to work with them.]{.answer}
+
+3. How does the `chdir` argument of `source()` compare to `with_dir()`? Why might you prefer one to the other?
+
+[`chdir` accepts a logical value (see `?source`) so it is less flexible than the approach outlined in `with_dir()`. Note that I think it is always bad practice to set working directories because it is unlikely that any two people have identical file paths and thus the code will not be run-able by others.]{.answer}
+
+4. Write a function that opens a graphics device, runs the supplied code, and closes the graphics device (always, regardless of whether or not the plotting code works).
+
+[This would be accomplished with `on.exit` but I don't think this exercise is valuable (also not super well-aligned with the implicit learning objectives of this section) so I'm going to leave it at that.]{.answer}
+
+5. We can use `on.exit()` to implement a simple version of `capture.output()`. Compare `capture.output()` to `capture.output2()`. How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas so they're easier to understand?
+
+```{r 06-exit_q5}
+#| eval: false
+
+capture.output2 <- function(code) {
+  temp <- tempfile()
+  on.exit(file.remove(temp), add = TRUE, after = TRUE)
+
+  sink(temp)
+  on.exit(sink(), add = TRUE, after = TRUE)
+
+  force(code)
+  readLines(temp)
+}
+capture.output2(cat("a", "b", "c", sep = "\n"))
+#> [1] "a" "b" "c"
+```
+
+[`capture.output()` has more appropriate error checks / handling but is longer because of this. Also, `capture.output()` uses `print()` instead of `readLines()` for the output so it will likely show different things in certain contexts.]{.answer}
 
 ## 6.8 Function Forms
 
