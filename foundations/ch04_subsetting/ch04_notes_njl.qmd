@@ -6,13 +6,13 @@ engine: knitr
 code-overflow: wrap
 ---
 
-## Introduction
+## 4.1 Introduction
 
 There are six ways to subset atomic vectors. There are three subsetting operators (`[[`, `[`, and `$`). These operators work differently with different vector types (e.g., lists, matrices, etc.).
 
-## Selecting Multiple Elements
+## 4.2 Selecting Multiple Elements
 
-### Multiple Elements -- Atomic Vectors
+### 4.2.1 Atomic Vectors
 
 You can use `[` to select any number of elements from a vector. Depending on what you put in the `[`, you can subset in six different ways.
 
@@ -25,35 +25,37 @@ You can use `[` to select any number of elements from a vector. Depending on wha
 | Zero (e.g., `x[0]`) | zero-length vector (useful for generating test data) |
 | Character vector | _If the vector is named_, returns elements whose names match the elements of the character vector used to subset |
 
-### Multiple Elements -- Lists
+### 4.2.2 Lists
 
 `[` returns a list, `[[` and `$` pull elements out of a list
 
-### Multiple Elements -- Matrices
+### 4.2.3 Matrices
 
 Can subset with one vector, multiple vectors, or with a matrix.
 
 By default, `[` simplifies the results to the lowest possible dimensionality
 
-### Multiple Elements -- Dataframes / Tibbles
+### 4.2.4 Dataframes / Tibbles
 
 When using a single index (e.g., `df[1:3]`), behavior is similar to that of lists: all columns are returned. When using multiple indices (e.g., `df[1:3, 2:4]`) specified rows (first index) and specified columns (second index). Note that when only one index is defined but the comma is included (e.g., `df[1:3, ]`), _all_ of the unspecified dimension is returned (i.e., all the columns for only specified rows or vice versa).
 
+### 4.2.5 Preserving Dimensionality
+
 Matrix-like subsetting for a single column (`df[, "x"]`) simplifies dataframes by default while the same subset method for tibbles always returns a tibble. The type of the data is unchanged for both dataframes and tibbles when list-subsetting (`df["x"]`) is used.
 
-## Selecting a Single Element
+## 4.3 Selecting a Single Element
 
 While `[` is useful for selecting one or more elements, `[[` and `$` are useful for extracting a single element (`$` is shorthand for `[[`).
 
-### Single Element -- `[[`
+### 4.3.1 `[[`
 
 Useful train metaphor where `x[1]` grabs the whole first train car while `x[[1]]` grabs the _contents of_ the first train car. So, `[` always returns a list (just of fewer elements) and the type of `[[` is dependent on the type of data in that 'train car'. Note that while `[` can extract any number of 'train cars', `[[` **can only be used to extract a single element**.
 
-### Single Element -- `$`
+### 4.3.2 `$`
 
 `x$y` is roughly equivalent to `x[["y"]]`. Often this is used to grab a single column in a dataframe. Key difference is that `$` does partial string matching for element names (i.e., `x$a` will return the contents of column `aa` if there is no column `a`.). You can change your global options to trigger a warning on this change (`options(warnPartialMatchDollar = TRUE)`) or you could use tibbles which don't support this sort of partial match.
 
-### Single Element -- Invalid Indices
+### 4.3.3 Invalid Indices
 
 | `row[[col]]` | Zero-length | OOB (int) | OOB (chr) | Missing |
 |:---:|:---:|:---:|:---:|:---:|
@@ -61,17 +63,17 @@ Useful train metaphor where `x[1]` grabs the whole first train car while `x[[1]]
 | List | _Error_ | _Error_ | `NULL` | `NULL` |
 | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
 
-### Single Element -- `@` and `slot()`
+### 4.3.4 `@` and `slot()`
 
 S4 objects also support the `@` operator (equivalent to `$`) and the `slot()` function (equivalent to `[[`). Note that `@` is more restrictive in that it will always return an error when the specified index does not exist.
 
-## Subsetting & Assignment
+## 4.4 Subsetting & Assignment
 
 All subsetting operators can be combined with assignment in a process called "**subassignment**". The basic syntax is `x[i] <- value`. For lists, `x[[i]] <- NULL` can be used to _remove_ a list element. To instead add a literal `NULL` element you'd use `x[i] <- list(NULL)`.
 
-## Applications
+## 4.5 Applications
 
-### Applications -- Lookup Tables
+### 4.5.1 Lookup Tables
 
 You can convert abbreviations fairly easily using these subsetting methods.
 
@@ -81,7 +83,7 @@ lookup <- c(m = "Male", f = "Female", u = NA)
 lookup[x]
 ```
 
-### Applications -- Matching & Merging
+### 4.5.2 Matching & Merging
 
 The `match()` function allows for integer-based matching.
 
@@ -98,17 +100,17 @@ id
 
 Note that if you're interesting in joining full tables together you should likely just use the appropriate `<type>_join` function from `dplyr`.
 
-### Applications -- Random Samples & Bootstraps
+### 4.5.3 Random Samples & Bootstraps
 
 Combine subsetting with `sample()` to randomly draw a subset of rows from a given dataframe.
 
-### Applications -- Ordering
+### 4.5.4 Ordering
 
 `order()` accepts a vector and returns how that vector should be re-arranged. It can be combined with `[` to re-order a given vector in the way that `order()` suggests.
 
 `sort()` or `dplyr::arrange()` offer similar functionality without the need to use `[`.
 
-### Applications -- Expanding Aggregated Counts
+### 4.5.5 Expanding Aggregated Counts
 
 If you have a dataframe where multiple rows have been collapsed into a single one with a count column, you can un-collapse them with `rep()` and `[`.
 
@@ -119,15 +121,15 @@ df
 df[rep(x = 1:nrow(df), times = df$n), ]
 ```
 
-### Applications -- Removing Columns (from Dataframes)
+### 4.5.6 Removing Columns (from Dataframes)
 
 You can remove columns by assigning `NULL` to the column(s) you don't want or by simply selecting _for_ every other column. You could do this latter option by manually listing all other column names or by using `setdiff()` to identify all other column names flexibly.
 
-### Applications -- Conditional Subsetting (by Row)
+### 4.5.7 Conditional Subsetting (by Row)
 
 Conditional subsetting can be done easily with `[`. See exercises for that section of this chapter.
 
-### Applications -- Boolean Algebra
+### 4.5.8 Boolean Algebra
 
 `which()` allows for easy subsetting because it converts Booleans (e.g., `T`/`F`) to an integer representation.
 

@@ -15,7 +15,7 @@ code-overflow: wrap
 librarian::shelf(lobstr)
 ```
 
-## Binding Basics
+## 2.2 Binding Basics
 
 Objects are not the same as their names. In the following code, two things are happening: (1) an object is created that is a vector of values and (2) that object is bound to the name `x`.
 
@@ -42,15 +42,17 @@ Note that R strictly enforces the use of **syntactic names**. These are names th
 
 These rules can be overridden by surrounding the desired name with backticks (\`) but doing so is cumbersome in the long run.
 
-## Copy-on-Modify
+## 2.3 Copy-on-Modify
 
 Anyone who has worked with R has noticed that when you create a new object by modifying an existing one, you don't affect the original one. This is because of R's **copy-on-modify** behavior, where R creates a copy of the first object then binds it to the new name. This might be paraphrased as R's objects being _immutable_, though their are exceptions.
 
 Note that this is an important difference from `fontawesome::fa(name = "python", a11y = "sem")` Python's default behavior. `fontawesome::fa(name = "python", a11y = "sem")` Python requires you to use the `.copy()` method or changes to a downstream object affect the values bound to the original name.
 
+### 2.3.1 `tracemem()`
+
 In R, we can trace when a given object is copied (and from what) using the `base::tracemem()` function. Note this doesn't work as expected in RStudio so you'll need to use the Terminal or R directly to experiment. Also, remember to use `base::untracemem()` when you're done to stop getting the memory address / object history for every line of code!
 
-### Copy-on-Modify -- Lists
+### 2.3.3 Lists
 
 Instead of storing the values themselves, each element of a list stores references to the values it "contains". This means that modifying one element of a list means that the unchanged elements of both lists (old and new) share memory addresses with their counterpart in the other list while the changed elements have different memory addresses. There's a really nice diagram of this in [Section 2.3.3](https://adv-r.hadley.nz/names-values.html#list-references).
 
@@ -69,11 +71,11 @@ lobstr::ref(l1)
 lobstr::ref(l2)
 ```
 
-### Copy-on-Modify -- Dataframes
+### 2.3.4 Dataframes
 
 Dataframes are lists of vectors (i.e., columns) which has an important consequence for copy-on-modify and where in computer memory objects are stored. If you modify a _column_ only that column needs a new object in computer memory. However, if you modify a _row_, **every** column is modified and all must be stored as new objects.
 
-### Copy-on-Modify -- Character Vectors
+### 2.3.5 Character Vectors
 
 R stores characters in a **global string pool** where each element of a character vector is a pointer to a unique string in the pool. We can check this with `lobstr::ref()`--just like we can check lists--but we have to set the `character` argument to `TRUE`.
 
@@ -85,7 +87,7 @@ my_char <- c("a", "a", "abc", "d")
 lobstr::ref(my_char, character = TRUE)
 ```
 
-## Object Size
+## 2.4 Object Size
 
 You can see how much memory an object takes with `lobstr::obj_size()`.
 
@@ -115,14 +117,14 @@ lobstr::obj_size(1:3)
 lobstr::obj_size(1:1e9)
 ```
 
-## Modify-in-Place
+## 2.5 Modify-in-Place
 
 There are some exceptions to copy-on-modify, namely:
 
 1. Objects with a single binding get a special performance optimization
 2. Environments (which are a special type of object) are always modified in place
 
-### Modify-in-Place -- Single Binding Objects
+### 2.5.1 Single Binding Objects
 
 Let's explore an example. We'll subtract the median from each column of a very large dataframe.
 
@@ -153,13 +155,13 @@ for (i in 1:5) {
 untracemem(x)
 ```
 
-### Modify-in-Place -- Environments
+### 2.5.2 Environments
 
 Environments are always modified in place. This is sometimes called "**reference semantics**" because when you modify an environment, all existing bindings to that environment continue to have the same reference.
 
 Environments can also refer to themselves (which is a unique property of environments).
 
-## Unbinding & Garbage Collector
+## 2.6 Unbinding & Garbage Collector
 
 When you use `rm()` you only remove the _names_ bound to the objects, not the objects themselves. This means that at the end of your code you might have many objects in your computer memory that have no names.
 

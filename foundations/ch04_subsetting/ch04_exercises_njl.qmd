@@ -22,7 +22,7 @@ librarian::shelf(purrr)
 }
 ```
 
-## Selecting Multiple Elements
+## 4.2.6 Selecting Multiple Elements Exercises
 
 1. Fix each of the following common data frame subsetting errors:
 
@@ -88,7 +88,7 @@ df[is.na(df)] <- 0
 df
 ```
 
-## Selecting a Single Element
+## 4.3.5 Selecting a Single Element Exercises
 
 1. Brainstorm as many ways as possible to extract the third value from the cyl variable in the mtcars dataset.
 
@@ -119,7 +119,7 @@ summary(mod)$r.squared
 summary(mod)[["r.squared"]]
 ```
 
-## Applications
+## 4.5.9 Applications Exercises
 
 1. How would you randomly permute the columns of a data frame? (This is an important technique in random forests.) Can you simultaneously permute the rows and columns in one step?
 

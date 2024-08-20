@@ -13,8 +13,7 @@ code-overflow: wrap
 }
 ```
 
-
-## Atomic Vectors
+## 3.2.5 Atomic Vectors Exercises
 
 1. How do you create raw and complex scalars? (See `?raw` and `?complex`.)
 
@@ -55,7 +54,7 @@ c(TRUE, 1L)
 
 [`is.vector()` tests for vectors that have no attributes other than names. Note this means that `is.vector()` would return `FALSE` for a "vector" of class "factor" because the levels are an attribute other than names]{.answer}
 
-## Attributes
+## 3.3.4 Attributes Exercises
 
 1. How is `setNames()` implemented? How is `unname()` implemented? Read the source code.
 
@@ -86,7 +85,7 @@ But when you print that object you don’t see the comment attribute. Why? Is th
 
 [I think two facets prevent the comment attribute from being displayed. First, I think most attributes are not printed by default. Second, I think `structure()` is just for _setting_ attributes. If you want to retrieve/view attributs creates by `structure()` you need to use `attributes()` or `attr()`. As an afterthought, could be that we're not binding it to an object?]{.answer}
 
-## S3 Atomic Vectors
+## 3.4.5 S3 Atomic Vectors Exercises
 
 1. What sort of object does `table()` return? What is its type? What attributes does it have? How does the dimensionality change as you tabulate more variables?
 
@@ -127,7 +126,7 @@ f3 <- factor(letters, levels = rev(letters))
 
 [`f3` differs from `f1` because its _values_ are in the reverse order of those of `f1`. This means that the level-to-integer coercion would work in the same way for both vectors but the order of those elements in the vector would be opposite.]{.answer}
 
-## Lists
+## 3.5.4 Lists Exercises
 
 1. List all the ways that a list differs from an atomic vector.
 
@@ -154,7 +153,7 @@ z
 class(z)
 ```
 
-## Dataframes & Tibbles
+## 3.6.8 Dataframes & Tibbles Exercises
 
 1. Can you have a data frame with zero rows? What about zero columns?
 
