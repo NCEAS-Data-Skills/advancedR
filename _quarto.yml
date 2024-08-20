@@ -5,6 +5,7 @@ project:
   render: 
     - index.qmd
     - foundations/foundations_njl.qmd
+    - _products
 
 execute:
   freeze: auto
@@ -21,6 +22,14 @@ website:
           - text: "Lyon Notes"
             href: foundations/foundations_njl.qmd
     right:
+      - text: "Highlights"
+        menu: 
+          - text: "Lyon Highlights"
+            href: _products/highlights_njl.qmd
+      - text: "People"
+        menu: 
+          - text: "Nick J Lyon"
+            href: https://njlyon0.github.io/
       - icon: github
         href: https://github.com/NCEAS-Data-Skills/advancedR
   page-footer:
