@@ -1,5 +1,6 @@
 ---
 title: "Chapter 6: Functions -- Notes & Exercises"
+author: "Anna Ramji"
 format: 
   html:
     toc: true
@@ -10,10 +11,6 @@ editor: source
 ---
 
 ## Setup
-
--   Update file name, add author field as appropriate
-
--   Feel free to customize this template as much as you'd like!
 
 -   yaml and setup chunk adapted from Casey O'Hara and Nick J Lyon
 
@@ -33,26 +30,208 @@ librarian::shelf(purrr)
 }
 ```
 
+# 6 Functions
+
+From [Chapter 6](https://adv-r.hadley.nz/functions.html#functions) in the second edition of [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham.
+
+Answers for all exercises can be found in [Chapter 5](https://advanced-r-solutions.rbind.io/functions) in the second edition of [Advanced R Solutions](https://advanced-r-solutions.rbind.io/)
+
+
+What are the three components of a function?
+
+[body, arguments, environment]{.answer}
+
+What does the following code return?
+
+```{r}
+x <- 10
+f1 <- function(x) {
+  function() {
+    x + 10
+  }
+}
+f1(1)()
+```
+
+[11]{.answer}
+
+How would you usually write this code?
+
+```{r}
+`+`(1, `*`(2, 3))
+
+1 + (2 * 3)
+
+```
+
+
+How could you make this call easier to read?
+
+```{r}
+mean(, TRUE, x = c(1:10, NA))
+
+# rewrite:
+mean(c(1:10, NA), na.rm = TRUE)
+```
+
+
+
+Does the following code throw an error when executed? Why or why not?
+```{r}
+f2 <- function(a, b) {
+  a * 10
+}
+f2(10, stop("This is an error!"))
+```
+
+[no, because the second item (b) is not used in the function.]{.answer}
+
+
+What is an infix function? How do you write it? What’s a replacement function? How do you write it?
+```{r}
+
+```
+
+How do you ensure that cleanup action occurs regardless of how a function exits?
+
+[`on.exit()`]{.answer}
+
+
+>Everything that exists is an object.
+Everything that happens is a function call.
+— John Chambers
+
 ## 6.1 Introduction
+
+
+#### Outline
+
+Section 6.2 describes the basics of creating a function, the three main components of a function, and the exception to many function rules: primitive functions (which are implemented in C, not R).
+
+Section 6.3 discusses the strengths and weaknesses of the three forms of function composition commonly used in R code.
+
+Section 6.4 shows you how R finds the value associated with a given name, i.e. the rules of lexical scoping.
+
+Section 6.5 is devoted to an important property of function arguments: they are only evaluated when used for the first time.
+
+Section 6.6 discusses the special ... argument, which allows you to pass on extra arguments to another function.
+
+Section 6.7 discusses the two primary ways that a function can exit, and how to define an exit handler, code that is run on exit, regardless of what triggers it.
+
+Section 6.8 shows you the various ways in which R disguises ordinary function calls, and how you can use the standard prefix form to better understand what’s going on.
 
 ## 6.2 Function Fundamentals
 
 ### 6.2.1 Function components
 
+The formals(), the list of arguments that control how you call the function.
+
+The body(), the code inside the function.
+
+The environment(), the data structure that determines how the function finds the values associated with the names.
+
+
+```{r}
+f02 <- function(x, y) {
+  # A comment
+  x + y
+}
+
+formals(f02)
+#> $x
+#> 
+#> 
+#> $y
+
+body(f02)
+#> {
+#>     x + y
+#> }
+
+environment(f02)
+#> <environment: R_GlobalEnv>
+```
+
+
+source reference
+
+```{r}
+attr(f02, "srcref")
+#> function(x, y) {
+#>   # A comment
+#>   x + y
+#> }
+```
+
+
 ### 6.2.2 Primitive functions
+
+ Primitive functions, like sum() and [, call C code directly, have type `builtin` or `special` (check with `typeof()`), exist primarily in C not R so their 3 components are `NULL`.
+
 
 ### 6.2.3 First-class functions
 
+
+R functions are objects in their own right, a language property often called “first-class functions”. Unlike in many other languages, there is no special syntax for defining and naming a function: you simply create a function object (with function) and bind it to a name with <-:
+
+```{r}
+f01 <- function(x) {
+  sin(1 / x ^ 2)
+}
+```
+
+
+anonymous function:
+
+```{r}
+lapply(mtcars, function(x) length(unique(x)))
+Filter(function(x) !is.numeric(x), mtcars)
+integrate(function(x) sin(x) ^ 2, 0, pi)
+```
+
+
+or put in lists:
+```{r}
+funs <- list(
+  half = function(x) x / 2,
+  double = function(x) x * 2
+)
+
+funs$double(10)
+#> [1] 20
+```
+
+**closures** -- R functions capture, or enclose, their environments
+
+
+
 ### 6.2.4 Invoking a function
+
+
+You normally call a function by placing its arguments, wrapped in parentheses, after its name: `mean(1:10, na.rm = TRUE)`. But what happens if you have the arguments already in a data structure?
+
+```{r}
+args <- list(1:10, na.rm = TRUE)
+```
+
+
+You can instead use do.call(): it has two arguments. The function to call, and a list containing the function arguments:
+
+```{r}
+do.call(mean, args)
+#> [1] 5.5
+```
 
 ### 6.2.5 Exercises
 
-1.  Given a name, like `"mean"`, [`match.fun()`](https://rdrr.io/r/base/match.fun.html) lets you find a function. Given a function, can you find its name? Why doesn’t that make sense in R?
+1.  Given a name, like `"mean"`, [`match.fun()`](https://rdrr.io/r/base/match.fun.html) lets you find a function. Given a function, can you find its name? Why doesn't that make sense in R?
 
->[]{.answer}
+>[R doesn't point at things reciprocally(?) like that (not 1-to-1 in a way that would make this work nicely). One function can have many names. Names point to a signle object, but objects don't have that constraint.]{.answer}
 
 
-2.  It’s possible (although typically not useful) to call an anonymous function. Which of the two approaches below is correct? Why?
+> note: As `formals()`, `body()` and `environment()` all return `NULL` for primitive functions, the easiest way to check if two functions are exactly equal is just to use `identical()`
+
+2.  It's possible (although typically not useful) to call an anonymous function. Which of the two approaches below is correct? Why?
 
 ```{r}         
 function(x) 3()
@@ -61,17 +240,18 @@ function(x) 3()
 #> [1] 3
 ```
 
+>[the second because it actually works... that `3 ()` in the first one is making me anxious. everything needs to be wrapped in parentheses before tring to call it.]{.answer}
+
+
+3.  A good rule of thumb is that an anonymous function should fit on one line and shouldn't need to use `{}`. Review your code. Where could you have used an anonymous function instead of a named function? Where should you have used a named function instead of an anonymous function?
+
 >[]{.answer}
 
-
-3.  A good rule of thumb is that an anonymous function should fit on one line and shouldn’t need to use `{}`. Review your code. Where could you have used an anonymous function instead of a named function? Where should you have used a named function instead of an anonymous function?
-
->[]{.answer}
-
+curious about what other ppl have to show for this
 
 4.  What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
 
->[]{.answer}
+>[`is.function()`, `is.primitive()`]{.answer}
 
 
 5.  This code makes a list of all functions in the base package.
@@ -85,20 +265,65 @@ funs <- Filter(is.function, objs)
 
    a.  Which base function has the most arguments?
     
-  >[]{.answer}
+  >[looked at solutions for this one]{.answer}
+  
+```{r}
+library(purrr)
 
-    b.  How many base functions have no arguments? What’s special about those functions?
+n_args <- funs %>% 
+  map(formals) %>% # Access to and Manipulation of the Formal Arguments, get or set the formal arguments of a function
+  map_int(length)
+
+
+n_args %>% 
+  sort(decreasing = TRUE) %>%
+  head()
+#> scan format.default source
+#> 22 16 16
+#> formatC library merge.data.frame
+#> 15 13 13
+#> 
+#> mine shows:
+#> scan source format.default formatC 
+#   22    17     16             15 
+# library merge.data.frame 
+#  13               13 
+```
+  
+
+    b.  How many base functions have no arguments? What's special about those functions?
     
-  > []{.answer}
+```{r}
+sum(n_args == 0)
+# returns NULL for primitive funcitons, length(NULL) is 0
+
+n_args2 <- funs %>% 
+  discard(is.primitive) %>% 
+  map(formals) %>%
+  map_int(length)
+
+sum(n_args2 == 0)
+#> [1] 47
+```
+    
+    
+  > [most are primitive!]{.answer}
 
     c.  How could you adapt the code to find all primitive functions?
     
-  >[]{.answer}
+```{r}
+#sum(is.null(n_args == 0))
 
+#length(objs %>% Filter(is.primitive))
+
+primitive_funs <- Filter(is.primitive, objs)
+length(primitive_funs)
+```
+    
 
 6.  What are the three important components of a function?
 
->[]{.answer}
+>[body, formals, environment]{.answer}
 
 
 7.  When does printing a function not show the environment it was created in?
@@ -129,7 +354,7 @@ funs <- Filter(is.function, objs)
 ### 6.4.5 Exercises
 
 
-1.    What does the following code return? Why? Describe how each of the three c’s is interpreted.
+1.    What does the following code return? Why? Describe how each of the three c's is interpreted.
 
 ```{r}
 c <- 10
@@ -325,7 +550,7 @@ plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
 
 ### 6.7.5 Exercises
 
-1.    What does `load()` return? Why don’t you normally see these values?
+1.    What does `load()` return? Why don't you normally see these values?
 
 >[]{.answer}
 
@@ -358,11 +583,29 @@ capture.output2(cat("a", "b", "c", sep = "\n"))
 #> [1] "a" "b" "c"
 ```
 
-Compare `capture.output()` to `capture.output2()`. How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas so they’re easier to understand?
+Compare `capture.output()` to `capture.output2()`. How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas so they're easier to understand?
 
 >[]{.answer}
 
 ## 6.8 Function Forms
+
+>Everything that exists is an object.
+Everything that happens is a function call.
+— John Chambers
+
+
+
+"While everything that happens in R is a result of a function call, not all calls look the same. Function calls come in four varieties:
+
+*   prefix: the function name comes before its arguments, like `foofy(a, b, c)`. These constitute of the majority of function calls in R.
+
+*   infix: the function name comes in between its arguments, like `x + y`. Infix forms are used for many mathematical operators, and for user-defined functions that begin and end with %`.`
+
+*   replacement: functions that replace values by assignment, like `names(df) <- c("a", "b", "c")`. They actually look like prefix functions.
+
+*   special: functions like `[[`, `if`, and `for.` While they don’t have a consistent structure, they play important roles in R’s syntax.
+
+While there are four forms, you actually only need one because any call can be written in prefix form. I’ll demonstrate this property, and then you’ll learn about each of the forms in turn."
 
 
 ### 6.8.1 Rewriting to prefix form
