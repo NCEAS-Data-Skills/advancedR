@@ -5,13 +5,149 @@
 
 # Install/load needed libraries
 ## install.packages("librarian")
-librarian::shelf(purrr)
+librarian::shelf(rlang)
 ```
 
 ### 7.2 Environment Basics
 
+Environments are similar to named lists **_except_** in the following 4 ways:
 
+1. Names in an environment _must_ be unique
+2. Names in an environment are not ordered
+3. An environment has a parent
+4. Environments are not copied when modified
 
+#### 7.2.1 Basics
+
+Can create an environment with `rlang::env()` (similar internal structure to `list()` and/or creating a named vector). The job of an environment is to **bind** values to their user-defined names.
+
+`env_print()` identifies some key information about the contents of the specified environment. `env_names()` returns a character vector of current bindings. 
+
+#### 7.2.2 Important Environments
+
+Current and global environments can be identified via `rlang::current_env()` and `rlang::global_env()` respectively.
+
+#### 7.2.3 Parents
+
+Environments have a parent which is another environment. <u>Parents define the order in which R looks for objects if it doesn't find it in the current environment</u> (i.e., if the function environment lacks a needed object, R will look in _that environment's parent_ for the object--and so on). Parents can be accessed via `rlang::env_parent()`.
+
+Only one environment _doesn't have_ a parent: the empty environment. The ancestors of every environment eventually terminate in the empty environment.
+
+#### 7.2.4 Super Assignment (`<<-`)
+
+Super assignment (`<<-`) creates/modifies an object in the _parent_ of the environment in which it is invoked! Useful in the context of function factories (more on this in chapter 10).
+
+#### 7.2.5 Getting & Setting
+
+Elements of an environment can be retrieved and set via `$` and `[[` (similar to lists), _except_ that `[[` does not accept numeric indices. `[` doesn't work at all on environments.
+
+You can use `env_get()` if you want an error when the specified object does not exist in the specified environment. You can use `env_poke()` and `env_bind()` to add one or more bindings (respectively) to an environment.
+
+To remove an element you need to use `env_unbind()` (setting it to `NULL` doesn't work because named `NULL`s are often useful).
+
+See `get()`, `assign()`, `exists()`, and `rm()` for more information on various getting/setting operations.
+
+#### 7.2.6 Advanced Bindings
+
+Two exotic variants of `env_bind()` exist: (1) `env_bind_lazy()` makes "delayed bindings" that are only evaluated when they are first accessed and (2) `env_bind_active()` makes "active bindings" that are recomputed every time they are accessed.
+
+Delayed bindings are useful for R packages to behave as if they have data loaded but in reality only load it when necessary. Active bindings are useful for R6 fields (more on this in chapter 14).
+
+#### 7.2.7 Exercises
+
+1. List three ways in which an environment differs from a list.
+
+[Environments are unordered, all names in them must be unique, and all (but one) environment has a parent]{.answer}
+
+2. Create an environment as illustrated by this picture (see online [here](https://adv-r.hadley.nz/environments.html#exercises-20)).
+
+[See below.]{.answer}
+
+```{r 07-basics_a2}
+# Make environment
+e1 <- env()
+
+# Create object in that environment pointing at that environment
+rlang::env_poke(env = e1, nm = "loop", value = e1)
+
+# Demonstrate that worked
+rlang::env_print(env = e1)
+```
+
+3. Create a pair of environments as illustrated by this picture (see online [here](https://adv-r.hadley.nz/environments.html#exercises-20)).
+
+[See below.]{.answer}
+
+```{r 07-basics_a3}
+# Make environments
+e1 <- env()
+e2 <- env()
+
+# Create an object in each that points at the other
+rlang::env_poke(env = e2, nm = "dedoop", value = e1)
+rlang::env_poke(env = e1, nm = "loop", value = e2)
+
+# Demonstrate that worked
+rlang::env_print(env = e1)
+rlang::env_print(env = e2)
+```
+
+4. Explain why `e[[1]]` and `e[c("a", "b")]` don't make sense when `e` is an environment.
+
+[The `[[` method doesn't work because lists are _not ordered_ which means there is no "first" element to access in that way. The second method doesn't work because `[` doesn't work for environments (see 7.2.5) for I think the same reason]{.answer}
+
+5. Create a version of `env_poke()` that will only bind new names, never re-bind old names. Some programming languages only do this and are known as "single assignment languages".
+
+[See below.]{.answer}
+
+```{r 07-basics_a5}
+# Define function
+custom_poke <- function(env, nm, value){
+  
+  # Only bind if the name isn't in use already
+  if(!nm %in% rlang::env_names(env = env)){
+    
+    rlang::env_poke(env = env, nm = nm, value = value)
+    
+  } else {
+    message("Name already exists in specified environment so no new binding made")
+  }
+}
+
+# Demonstrate it works
+## No existing object
+custom_poke(env = rlang::global_env(), nm = "new_obj", value = 3)
+new_obj
+
+## Existing object
+x <- 0
+custom_poke(env = rlang::global_env(), nm = "x", value = 2)
+x
+```
+
+6. What does this function do? How does it differ from `<<-` and why might you prefer it?
+
+[This function returns an error if there is no object to _rebind_ to specified name. This is preferable as--I think--`<<-` silently skips objects that already exist. So having an informative error might be useful if this was a lower-order building block for some larger effort]{.answer}
+
+```{r 07-basics_q6}
+#| eval: false
+
+rebind <- function(name, value, env = caller_env()) {
+  if (identical(env, empty_env())) {
+    stop("Can't find `", name, "`", call. = FALSE)
+  } else if (env_has(env, name)) {
+    env_poke(env, name, value)
+  } else {
+    rebind(name, value, env_parent(env))
+  }
+}
+rebind("a", 10)
+#> Error: Can't find `a`
+a <- 5
+rebind("a", 10)
+a
+#> [1] 10
+```
 
 ### 7.3 Recursing Over Environments
 
