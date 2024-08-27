@@ -5,7 +5,7 @@
 
 # Install/load needed libraries
 ## install.packages("librarian")
-librarian::shelf(rlang)
+librarian::shelf(rlang, lobstr, stringi)
 ```
 
 ### 7.2 Environment Basics
@@ -253,12 +253,47 @@ f1(1)
 
 ### 7.5 Call Stacks
 
+The "caller" environment is another environment and can be accessed via `rlang::caller_env()`. Call stacks are made up of "frames".
 
+#### 7.5.1 Simple Call Stacks
+
+You can see the call stack by using `traceback()` after an error has occurred. We can also use `lobstr::cst()` (accesses the <u>c</u>all <u>s</u>tack <u>t</u>ree) which displays this information in a nicer visual format.
+
+#### 7.5.2 Lazy Evaluation
+
+The fact that arguments aren't evaluated until they are used (revisit chapter 6 if needed) means that you can get 'branches' in your call stack where a different branch is created/used only when a given argument is evaluated.
+
+#### 7.5.3 Frames
+
+**Each element of a call stack is called a "frame".** Frames are a vital data structure and R code can only access some of it because deeper tampering could break R. Frames have three components: (1) an expression giving the function call, (2) an environment which is _typically_--but not always--the execution environment, and (3) a parent (i.e., the previous call in the call stack).
+
+#### 7.5.4 Dynamic Scope
+
+"Dynamic scoping" involves looking up variables in the call stack rather than in the enclosing environment. It is primarily useful in developing functions for interactive data analysis (more on this in chapter 20).
+
+#### 7.5.5 Exercises
+
+1. Write a function that lists all the variables defined in the environment in which it was called. It should return the same results as `ls()`.
+
+[See below. Don't love my method of removing 'secret' objects but it does work (though I suspect it wouldn't if the user created objects with a leading `.`)]{.answer}
+
+```{r}
+# Define function
+ls_dup <- function(env = rlang::global_env()){
+  objs <- rlang::env_names(env = env)
+  objs2 <- objs[stringi::stri_sub(str = objs, from = 1, to = 1) != "."]
+  return(objs2)
+}
+
+# Demonstrate success
+sort(ls())
+sort(ls_dup())
+```
 
 ### 7.6 Environments as Data Structures
 
+Problems solved by environments:
 
-
-
-
-
+1. **Avoids copying large data.** R6 objects offer a more pleasant interface than 'bare' environments
+2. **Manage state within a package.** Explicit environments are useful in packages because they allow you to maintain state across function calls
+3. **Simulate a hashmap.** "Hashmaps" are a data structure that take a constant time to find an object based on its name. Environments do this by default and so can be used to simulate a hashmap
