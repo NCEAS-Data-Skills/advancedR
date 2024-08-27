@@ -151,7 +151,44 @@ a
 
 ### 7.3 Recursing Over Environments
 
+Recursive operations are needed to find/operate on all ancestors of a particular environment. Wickham defines the `where` function (see below) that identifies the environment that houses a particular object (following R's regular scoping rules). Returns an error if the function reaches the empty environment without finding the object.
 
+```{r 07-recursive_where}
+where <- function(name, env = caller_env()) {
+  if (identical(env, empty_env())) {
+    # Base case
+    stop("Can't find ", name, call. = FALSE)
+  } else if (env_has(env, name)) {
+    # Success case
+    env
+  } else {
+    # Recursive case
+    where(name, env_parent(env))
+  }
+}
+```
+
+Here are some examples of how this can be used (excluding the one that throws an error to be able to render this document).
+
+```{r 07-recursive_where-ex}
+# where("yyy")
+##> Error: Can't find yyy
+
+x <- 5
+where("x")
+
+where("mean")
+```
+
+#### 7.3.1 Exercises
+
+1. Modify `where()` to return _all_ environments that contain a binding for `name`. Carefully think through what type of object the function should return.
+
+[Skipping this question because I honestly cannot think of a use-case. I think a list would be the better type to return so it could include the environment ID and have easy space for other information if needed]{.answer}
+
+2. Write a function called `fget()` that finds only function objects. It should have two arguments, `name` and `env`, and should obey the regular scoping rules for functions: if there’s an object with a matching name that’s not a function, look in the parent. For an added challenge, also add an `inherits` argument which controls whether the function recurses up the parents or only looks in one environment.
+
+[Again, skipping this one because it doesn't feel like it has broad utility]{.answer}
 
 ### 7.4 Special Environments
 
