@@ -225,6 +225,12 @@ Stringing together multiple function calls:
 * saving as intermediate objects e.g., `y <- x - mean(x); z <- y^2; w <- mean(z), xx <- sqrt(w)` is clunky and focuses on objects (nouns)
 * piping is good for communicating flow (verbs) but dependent on external package (but now native! I still need to start using that instead)
 
+For sequences of multiple calls to functions, three ways:
+
+* Nesting (`f(g(x))`) is concise and ok for short sequences, but complicated and hard to read for long sequences.
+* Intermediate objects (`y <- f(x); g(y)`) is ok if intermediate objects can be useful, but when truly intermediate kind of annoying.
+* Piping (`x %>% f() %>% g()`) is readable, but requires an extra package (not any more!) and assumes reader understand piping.
+
 ## 6.4 Lexical Scoping
 
 "Lexical scoping" - looking up the value associated with a name, based on how the function was defined, not how the function was called.
@@ -274,31 +280,31 @@ c <- 10
 c(c = c)
 ```
 
->[]{.answer}
+>[Creates a named vector, with name "c" and value 10.  The first c is interpreted as the function `c`, which combines objects to make vectors; when a name is used in a function call (as in `c()`) R ignores non-function objects to find the proper match.  The second c is the named part of the named vector.  The third assigns the value `c (=10)` to the vector.]{.answer}
 
 
 2.   What are the four principles that govern how R looks for values?
 
->[]{.answer}
+>[Name masking - names created inside functions mask names created outside those functions.  Functions vs variables - if a function and value share the same name (diff envts) then if name used as a function call, ignores non-function objects.  Fresh start - each subsequent invocation of a function "forgets" the values in the previous one (the temp environment disappears along with all values inside it!).  And dynamic lookup - R looks for values when an object is run, not when the function is created.  This can be problematic if the function depends on values in an envt "above" the function environment - e.g., in GlobalEnv - that change.  Use `codetools::findGlobals()` to find external dependencies within a function!]{.answer}
 
 
 3.  What does the following function return? Make a prediction before running the code yourself.
 
 ```{r}
-f <- function(x) {
-  f <- function(x) {
-    f <- function() {
+f <- function(x) {    ### f_1
+  f <- function(x) {  ### f_2
+    f <- function() { ### f_3
       x ^ 2
     }
-    f() + 1
+    f() + 1           ### 2. call f_3
   }
-  f(x) * 2
+  f(x) * 2            ### 1. call f_2
 }
 f(10)
 ```
 
 
->[]{.answer}
+>[Prediction: `f(10)` in global env passes 10 (in envt 1) to `f(10) * 2`.  But that `f(10)` holds x = 10 in envt 2 and calls f() + 1.  That, in turn, takes the x = 10 from envt 2 into envt 3, squares it, and returns 100 to f() in envt 2, where + 1 happens, and 101 is returned to f(x) in envt 1, where it's multiplied by 2 and then that result is returned up to the global envt.  So the result is 202.  And it checks out!]{.answer}
 
 
 ## 6.5 Lazy Evaluation
