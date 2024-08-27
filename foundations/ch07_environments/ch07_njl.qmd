@@ -1,0 +1,34 @@
+
+```{r 07-libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+### 7.2 Environment Basics
+
+
+
+
+### 7.3 Recursing Over Environments
+
+
+
+### 7.4 Special Environments
+
+
+
+### 7.5 Call Stacks
+
+
+
+### 7.6 Environments as Data Structures
+
+
+
+
+
+

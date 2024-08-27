@@ -33,5 +33,14 @@ code-overflow: wrap
 
 {{< include ch06_functions/ch06_njl.qmd >}}
 
+## Chapter 7: Environments
+
+{{< include ch07_environments/ch07_njl.qmd >}}
+
+
+
+
+
+
 
 
