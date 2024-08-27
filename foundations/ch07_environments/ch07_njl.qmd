@@ -192,7 +192,64 @@ where("mean")
 
 ### 7.4 Special Environments
 
+Special environments are typically created by R instead of by the user. 
 
+#### 7.4.1 Package Environments and the Search Path
+
+Packages attached via `library()` or `require()` become parents of the global environment. The immediate parent of the global environment is the _most recent_ package to be loaded followed by the next most recent (and so on).
+
+The order in which packages are attached is known as the "search path". `base::search()` and `rlang::search_env()` return the names of these environments and the environments themselves respectively.
+
+#### 7.4.2 Function Environment
+
+The "function environment" is the current environment at the time the function was created. Functions that capture their environments like this are called "closures" which is why that term is used interchangeably with "function" in R's documentation.
+
+The distinction between the function environment and then environment in which the function itself is bound is the difference between how the function finds its variables versus how we can find the function.
+
+#### 7.4.3 Namespaces
+
+From 7.4.1 we saw that the order of package environments in the search path _depends on the order in which they are loaded_. This could make searching for a function in a particular package more difficult because a function of the same name in a package loaded _later_ (counter-intuitively) would be found and used first.
+
+"Namespaces" prevent this from happening by letting the user specify the package environment in which the function should be found. Note that the package environment is _external to_ the package (its how users find packages/functions) while the namespcae environemnt is _internal to_ the package (and guarantees that functions invoked by a function look first inside their own package).
+
+Internal objects are those that are installed with a given package but are found only in the namespace environment (effectively hiding them from the user while leaving them available to other tools in the package).
+
+Namespace environments have the following ancestors: 
+
+- "**Imports**" environment: contains bindings to all functions used by the package (controlled by `NAMESPACE` file created by package maintainer)
+- **base namespace** environment: parent of imports environment; contains same bindings as base environment but with a different parent
+- **global** environment: parent of the base namespace environment; means that if a binding isn't found in the imports environment R's usual object searching rules apply. This is a bad call and `R CMD check` will warn package developers about code lie this
+
+There is no direct link between package and namespace environments; instead each is linked to the function environment.
+
+#### 7.4.4 Execution Environments
+
+Each time a function is run, a new environment is created to host those internal operations; this is called the "execution" environment. Such environments "go away" after the function finishes (i.e., they are garbage collected).
+
+#### 7.4.5 Exercises
+
+1. How is `rlang::search_envs()` different from `rlang::env_parents(rlang::global_env())`?
+
+[The first includes the global environment (as the first item) while the second does not return the global environment but does include the empty environment]{.answer}
+
+2. Draw a diagram that shows the enclosing environments of this function:
+
+```{r 07-special-env_q2}
+#| eval: false
+
+f1 <- function(x1) {
+  f2 <- function(x2) {
+    f3 <- function(x3) {
+      x1 + x2 + x3
+    }
+    f3(3)
+  }
+  f2(2)
+}
+f1(1)
+```
+
+3. Write an enhanced version of `str()` that provides more information about functions. Show where the function was found and what environment it was defined in.
 
 ### 7.5 Call Stacks
 
