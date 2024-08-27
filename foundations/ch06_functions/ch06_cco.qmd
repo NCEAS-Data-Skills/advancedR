@@ -219,16 +219,44 @@ f3
 
 ## 6.3 Function Composition
 
+Stringing together multiple function calls: 
 
+* nesting (e.g., `rmse <- sqrt(mean((x - mean(x))^2)))`) - good for short sequences, but gets unwieldy for longer sequences of function calls
+* saving as intermediate objects e.g., `y <- x - mean(x); z <- y^2; w <- mean(z), xx <- sqrt(w)` is clunky and focuses on objects (nouns)
+* piping is good for communicating flow (verbs) but dependent on external package (but now native! I still need to start using that instead)
 
 ## 6.4 Lexical Scoping
 
+"Lexical scoping" - looking up the value associated with a name, based on how the function was defined, not how the function was called.
 
 ### 6.4.1 Name masking
 
+Names created inside a function "mask" names created outside the function - e.g.,
+
+```{r}
+x <- 10
+g <- function() {x <- 20; x}
+g()
+x
+```
+
+the `x` inside the function supercedes the value of `x` defined outside the function.  If a name is not defined inside the function, R looks one level up (one environment up) until it finds a match; if still none after getting to global env, looks in loaded packages.
 
 ### 6.4.2 Functions versus variables
 
+If a name is used for a function call, R ignores non-function objects when looking for that name... this is confusing to have a name associated with a function at one level and a variable at another level, e.g.:
+
+```{r}
+g09 <- function(x) x + 100
+g10 <- function() {
+  g09 <- 10
+  g09(g09)
+}
+g10()
+#> [1] 110
+```
+
+Just don't do that!
 
 ### 6.4.3 A fresh start
 
