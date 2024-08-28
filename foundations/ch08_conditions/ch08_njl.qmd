@@ -1,0 +1,33 @@
+
+```{r 08-libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(rlang)
+```
+
+### 8.2 Signaling Conditions
+
+
+
+
+### 8.3 Ignoring Conditions
+
+
+
+### 8.4 Handling Conditions
+
+
+
+### 8.5 Custom Conditions
+
+
+
+### 8.6 Applications
+
+
+
+
+
