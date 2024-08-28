@@ -65,7 +65,9 @@ file.rm2 <- function(file){
 
 ### 8.3 Ignoring Conditions
 
+Simplest way of handling conditions in R is to ignore them. `try()` ignores errors, `suppressWarnings()` ignores warnings, and `suppressMessages()` ignores messages.
 
+`try()` continues execution of the function after encountering an error though `tryCatch()` is more recommended for debugging purposes.
 
 ### 8.4 Handling Conditions
 
