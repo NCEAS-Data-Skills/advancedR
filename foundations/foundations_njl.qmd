@@ -37,6 +37,10 @@ code-overflow: wrap
 
 {{< include ch07_environments/ch07_njl.qmd >}}
 
+## Chapter 8: Conditions
+
+{{< include ch08_conditions/ch08_njl.qmd >}}
+
 
 
 
