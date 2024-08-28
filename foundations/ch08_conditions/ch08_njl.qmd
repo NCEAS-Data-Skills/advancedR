@@ -8,6 +8,10 @@
 librarian::shelf(rlang)
 ```
 
+### 8.1 Introduction
+
+"Conditions" are paired sets of tools that allow function authors to indicate when something unusual is happening. Function authors **signal** conditions with functions like `stop()`, `warning()`, or `message()`. Function users can then handle them with `tryCatch()` or `withCallingHandlers()`.
+
 ### 8.2 Signaling Conditions
 
 
