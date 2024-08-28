@@ -14,8 +14,54 @@ librarian::shelf(rlang)
 
 ### 8.2 Signaling Conditions
 
+| **Condition** | **Severity** | **Description** | Function |
+|:---:|:---:|:-----------------------------|:---:|
+| Error | Most | Indicate that the function _cannot_ continue and execution must stop | `stop()` |
+| Warning | Intermediate | Indicate something has gone wrong but the function could at least partially recover | `warning()` |
+| Message | Least | Indicate that an action has been taken on the user's behalf but not necessarily a problem | `message()` |
+| Interrupt | -- | <u>Only occurs in interactive contexts</u>. Indicates the user has manually escaped an execution | -- |
 
+#### 8.2.1 Errors
 
+By default, errors include the function call where the error occurred. Can be silenced with the `call. = F` argument in `stop()` or by using `rlang::abort()` instead of `stop()` which has this behavior set as the default. Wickham says it is good practice to do this but I think it can be helpful when debugging heavily nested functions to know whether the function the user thinks they called is the one with the error or instead is some deeper/internal function.
+
+Tidyverse style guide has nice [tips on writing informative error messages](https://style.tidyverse.org/error-messages.html).
+
+#### 8.2.2 Warnings
+
+You can have multiple errors on the same function call (while you'd only get the _first_ error). Warnings are sort of nebulous because it can be hard to decide between using one versus using an error/message instead. Wickham suggests the obvious contexts for warnings are when you deprecate a function or when you're reasonably certain you can recover from a problem.
+
+#### 8.2.3 Messages
+
+Messages are used for information purpsoes only. Common cases include:
+
+- When default argument requires substantive computation and you want to tell the user what was done
+- When a function is called for side effects but would otherwise be silent
+- When a process takes a while and you want to re-assure the user that the function is still working (or you can use a progress bar with `progress`--see [here](https://r-lib.github.io/progress/))
+- When a package is first loaded
+
+Generally nice to give a `quiet` argument to the user so there's an easy way of silencing messages if desired.
+
+#### 8.2.4 Exercises
+
+1. Write a wrapper around `file.remove()` that throws an error if the file to be deleted does not exist.
+
+[See below]{.answer}
+
+```{r 08-signal_a1}
+file.rm2 <- function(file){
+  
+  if(file.exists(file) != TRUE)
+    stop("Can't find `file`")
+  
+  file.remove(file)
+  
+}
+```
+
+2. What does the `appendLF` argument to `message()` do? How is it related to `cat()`?
+
+[That argument determines whether a new line should be added to the end of messages returned as character strings. `cat()` only behaves this way if the `fill` argument is `TRUE` or numeric]{.answer}
 
 ### 8.3 Ignoring Conditions
 
