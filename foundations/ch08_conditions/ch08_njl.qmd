@@ -229,7 +229,71 @@ show_condition_v2 <- function(code) {
 
 ### 8.5 Custom Conditions
 
+Built in conditions only contain a `message` and a `call`. So, if you want to catch a particular type of error you are restricted to only being able to use the text of the error message (which is often unhelpful--particularly for custom functions of dubious provenance).
 
+Typical syntax is as follows (and is built with `rlang::abort()`):
+
+```{r 08-custom-syntax}
+#| eval: false
+
+rlang::abort(
+  "error_not_found",
+  message = "Path `blah.csv` not found", 
+  path = "blah.csv"
+)
+#> Error: Path `blah.csv` not found
+```
+
+#### 8.5.1 Motivation
+
+`base::log()` is not very specific. If there are multiple arguments, the error returned for an inappropriate class suppled to just one of them is ambiguous about _which_ argument caused the error. We can write a custom function that is more precise about which argument is problematic (or other information useful in debugging the function).
+
+However, manually assembling error information into a single string is still not ideal for handling errors programmatically.
+
+#### 8.5.2 Signaling
+
+You can build your custom condition that includes all the metadata that you could possibly need to debug a given error. When combining `rlang::abort()` and `glue::glue()` you can also make a really smooth interior to your custom condition function.
+
+#### 8.5.3 Handling
+
+Once your custom conditions have a clear and consistent internal structure they are easier to program with. The `testthat` library is underpinned--essentially--by custom conditions and their handlers (which is why that library is so useful for unit test writing in function/package development).
+
+#### 8.5.4 Exercises
+
+1. Inside a package, it's occasionally useful to check that a package is installed before using it. Write a function that checks if a package is installed (with `requireNamespace("pkg", quietly = FALSE)`) and if not, throws a custom condition that includes the package name in the metadata.
+
+[See below]{.answer}
+
+
+```{r 08-custom_a1}
+#| eval: false
+
+package_check <- function(pkg){
+  
+  # Error catching
+  if(requireNamespace(package = pkg, quietly = TRUE) != TRUE){
+    rlang::abort(
+      "pkg_not_found", 
+      message = glue::glue("package '{pkg}' not installed"),
+      package = pkg)
+  }
+  # What to do if no error is found
+  TRUE 
+}
+
+package_check(pkg = "ggplot2")
+## [1] TRUE
+
+package_check(pkg = "ggplot77")
+## Error in `package_check()`:
+## ! package 'ggplot77' not installed
+## Backtrace:
+##  1. global package_check(pkg = "ggplot77")
+```
+
+2. Inside a package you often need to stop with an error when something is not right. Other packages that depend on your package might be tempted to check these errors in their unit tests. How could you help these packages to avoid relying on the error message which is part of the user interface rather than the API and might change without notice?
+
+[You could write your own custom conditions with some sort of standardized structure and then avoid changing that interior components so that the 'downstream' package authors could build their unit tests to rely on firmer metadata than the simple text of the error message. Seems like you would need to do this from the outset and/or release a major version update when you implemented this as making such a change after releasing your package would absolutely be a breaking change for anyone relying on the simple error text method]{.answer}
 
 ### 8.6 Applications
 
