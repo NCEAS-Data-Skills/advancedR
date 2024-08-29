@@ -8,7 +8,7 @@ code-overflow: wrap
 
 ## Foundations Highlights
 
-### Class Coercion (Chapter 3)
+### Class Coercion (Ch. 3)
 
 When you combine multiple vector types of different classes, there are pre-determined rules for which class "wins" (i.e., which class both inputs will be coerced to automatically prior to combination). This order (from most specific to most general) is: 
 
@@ -27,7 +27,7 @@ Other vector classes are secretly built on one of these four and are treated as 
 
 _See [3.2.4](https://adv-r.hadley.nz/vectors-chap.html#testing-and-coercion) and [3.4](https://adv-r.hadley.nz/vectors-chap.html#s3-atomic-vectors) for more information._
 
-### `[`, `[[`, and `$` (Chapter 4)
+### `[`, `[[`, and `$` (Ch. 4)
 
 If `x` is a train with multiple cars and each car contains multiple items:
 
@@ -44,13 +44,29 @@ If `name` is an object containing one of the names in `x`,
 
 _See [4.3.1](https://adv-r.hadley.nz/subsetting.html#section) and [4.3.2](https://adv-r.hadley.nz/subsetting.html#section-1) for more information._
 
-### Looping Across Integers (Chapter 5)
+### Looping Across Integers (Ch. 5)
 
 When you're looping across integers, it can be really tempting to use `1:length(x)` in the definition of the loop (I know I've done this!). However, if some issue in the code and/or data causes `x` to have a length of 0, you'll get some bizarre behavior that may be very hard to debug. Instead if you use `seq_along(x)` you'll never get atypical behavior because if `x` has length 0 the loop will simply run once (because it will return "1" even when whatever its sequencing along with has no elements).
 
 Your loop wouldn't work in either case but at least with `seq_along` it'll be immediately clear that the problem is with `x`.
 
 _See [5.3.1](https://adv-r.hadley.nz/control-flow.html#common-pitfalls) for more information._
+
+### Signaling Conditions (Ch. 8)
+
+| **Condition** | **Severity** | **Description** | **Function** |
+|:---:|:---:|:-----------------------------|:---:|
+| Error | Most | Indicates that the function _cannot_ continue and execution must stop | `stop()` |
+| Warning | Intermediate | Indicates something has gone wrong but the function could at least partially recover | `warning()` |
+| Message | Least | Indicates that an action has been taken on the user's behalf but not necessarily a problem | `message()` |
+
+_See [8.2](https://adv-r.hadley.nz/conditions.html#signalling-conditions) for more information._
+
+
+
+
+
+
 
 
 
