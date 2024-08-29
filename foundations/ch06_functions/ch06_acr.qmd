@@ -458,10 +458,10 @@ f1 <- function(x = {y <- 1; 2}, y = 0) {
   c(x, y)
 }
 f1()
-ys
+y
 ```
 
->[]{.answer}
+>[y is assigned to 1, x is assigned to 2; y is still defgined outside of the function as 10]{.answer}
 
 
 4.    In `hist()`, the default value of `xlim` is `range(breaks)`, the default value for breaks is `"Sturges"`, and

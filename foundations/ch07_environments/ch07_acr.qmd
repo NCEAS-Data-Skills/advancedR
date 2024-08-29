@@ -1,0 +1,178 @@
+---
+title: "Chapter 7: Environments -- Notes & Exercises"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+engine: knitr
+code-overflow: wrap
+editor: source
+---
+
+## Setup
+
+-   Update file name, add author field as appropriate
+
+-   Feel free to customize this template as much as you'd like!
+
+-   yaml and setup chunk adapted from Casey O'Hara and Nick J Lyon
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+# 7 Functions
+
+From [Chapter 7](https://adv-r.hadley.nz/environments.html#environments) in the second edition of [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham.
+
+Answers for all exercises can be found in [Chapter 6](https://advanced-r-solutions.rbind.io/environments) in the second edition of [Advanced R Solutions](https://advanced-r-solutions.rbind.io/)
+
+## 7.1 Introduction
+
+## 7.2 Environment Basics
+
+### 7.2.1 Basics
+
+### 7.2.2 Important Environments
+
+### 7.2.3 Parents
+
+### 7.2.4 Super assignment, <<-
+
+### 7.2.5 Getting and setting
+
+### 7.2.6 Advanced bindings
+
+### 7.2.7 Exercises
+
+1. List three ways in which an environment differs from a list.
+
+>[]{.answer}
+
+2. Create an environment as illustrated by this picture.
+
+![](https://d33wubrfki0l68.cloudfront.net/fcf3570a7ae04e6d1cc280e22b2d2822e812d6b0/3e607/diagrams/environments/recursive-1.png)
+
+>[]{.answer}
+
+3. Create a pair of environments as illustrated by this picture.
+
+![](https://d33wubrfki0l68.cloudfront.net/8a81694cf39662e011249fead6821cc357a5ff5a/72820/diagrams/environments/recursive-2.png)
+
+>[]{.answer}
+
+4. Explain why `e[[1]]` and `e[c("a", "b")]` don't make sense when `e` is an environment.
+
+>[]{.answer}
+
+5. Create a version of `env_poke()` that will only bind new names, never re-bind old names. Some programming languages only do this, and are known as single assignment languages.
+
+>[]{.answer}
+
+6. What does this function do? How does it differ from `<<-` and why might you prefer it?
+
+```{r eval=FALSE}
+rebind <- function(name, value, env = caller_env()) {
+  if (identical(env, empty_env())) {
+    stop("Can't find `", name, "`", call. = FALSE)
+  } else if (env_has(env, name)) {
+    env_poke(env, name, value)
+  } else {
+    rebind(name, value, env_parent(env))
+  }
+}
+rebind("a", 10)
+#> Error: Can't find `a`
+a <- 5
+rebind("a", 10)
+a
+#> [1] 10
+```
+
+>[]{.answer}
+
+## 7.3 Recursing over environments
+
+### 7.3.1 Exercises
+
+1. Modify `where()` to return all environments that contain a binding for name. Carefully think through what type of object the function will need to return.
+
+>[]{.answer}
+
+2. Write a function called `fget()` that finds only function objects. It should have two arguments, name and env, and should obey the regular scoping rules for functions: if there's an object with a matching name that's not a function, look in the parent. For an added challenge, also add an inherits argument which controls whether the function recurses up the parents or only looks in one environment.
+
+>[]{.answer}
+
+## 7.4 Special environments
+
+### 7.4.1 Package environments and the search path
+
+### 7.4.2 The function environment
+
+
+### 7.4.3 Namespaces
+
+
+### 7.4.4 Execution Environments
+
+
+### 7.4.5 Exercises
+
+
+1. How is `search_envs()` different from `env_parents(global_env())`?
+
+>[]{.answer}
+
+2. Draw a diagram that shows the enclosing environments of this function:
+
+```{r}
+f1 <- function(x1) {
+  f2 <- function(x2) {
+    f3 <- function(x3) {
+      x1 + x2 + x3
+    }
+    f3(3)
+  }
+  f2(2)
+}
+f1(1)
+```
+
+>[]{.answer}
+
+3. Write an enhanced version of `str()` that provides more information about functions. Show where the function was found and what environment it was defined in.
+
+>[]{.answer}
+
+## 7.5 Call stacks
+
+### 7.5.1 Simple call stacks
+
+
+### 7.5.2 Lazy evaluation
+
+
+### 7.5.3 Frames
+
+
+### 7.5.4 Dynamic Scope
+
+### 7.5.5 Exercises
+
+1. Write a function that lists all the variables defined in the environment in which it was called. It should return the same results as `ls()`.
+
+>[]{.answer}
+
+## 7.6 As data structures
