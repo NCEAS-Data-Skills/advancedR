@@ -309,14 +309,56 @@ f(10)
 
 ## 6.5 Lazy Evaluation
 
+Function arguments only evaluated if and when they are accessed.
+
 ### 6.5.1 Promises
 
+Data structure that enables lazy evaluation.  Three components:
+
+* expression that will be (eventually) evaluated, e.g., `x + y`
+* environment in which to evaluate the expression, i.e., the environment where the function is called
+* a value, "which is computed and cached the first time a promise is accessed when the expression is evaluated in the specified environment."  That's a mouthful!  The example:
+
+```{r}
+double <- function(x) { 
+  message("Calculating...")
+  x * 2
+}
+
+h03 <- function(x) {
+  c(x, x)
+}
+
+h03(double(20))
+#> Calculating...
+#> [1] 40 40
+```
+
+The `double(20)` is called only once, as noted by only one instance of "calculating"... but since that value is passed in once (as `x` to `h03`), would it make sense that it should be called twice?  I don't think so?
 
 ### 6.5.2 Default arguments
 
+Default arguments are evaluated lazily - so can be defined in terms of other arguments, or even values defined later in the function, presumably as long as it is defined before the default argument is accessed:
+
+```{r}
+h04 <- function(x = 1, y = x * 2, z = a + b) {
+  a <- 10
+  b <- 100
+  
+  c(x, y, z)
+}
+
+h04()
+#> [1]   1   2 110
+```
+
+But that's confusing and hard to understand... don't do it!
+
+Eval environ is different for default and user-supplied arguments - user-supplied evaluated outside the function (e.g., global env) while default evaluated inside the function (i.e., function env).
 
 ### 6.5.3 Missing arguments
 
+Use missing() inside a function to test whether an argument is missing (no default, no value supplied) - this can then be used to create a default.  But seems sloppy - just set a default NULL for the argument, and if null, use the same logic to create a helpful default.
 
 ### 6.5.4 Exercises
 
@@ -335,7 +377,7 @@ x_ok(1:3)
 #> [1] FALSE
 ```
 
->[]{.answer}
+>[Evaluates the LHS; if FALSE, then doesn't evaluate the RHS since the whole result is definitely FALSE.  In this case, for `x_ok(1:3)`, if it evaluated the last part (x > 0) it would return TRUE TRUE TRUE, length 3, which conflicts with the length of the other two tests.]{.answer}
 
 
 What is different with this code? Why is this behaviour undesirable here?
@@ -353,7 +395,7 @@ x_ok(1:3)
 #> [1] FALSE FALSE FALSE
 ```
 
->[]{.answer}
+>[Presumably you want a single TRUE or FALSE; but if & evaluates all tests (instead of stopping lazily at the first FALSE), then it gets to the final test and results in a length-3 response.]{.answer}
 
 
 2.    What does this function return? Why? Which principle does it illustrate?
@@ -366,7 +408,7 @@ f2 <- function(x = z) {
 f2()
 ```
 
->[]{.answer}
+>[Returns 100.  Illustrates that the default argument is not evaluated until it is accessed, so even though `z` doesn't exist when called, it exists (defined immediately before) when `x` is accessed.]{.answer}
 
 
 3.    What does this function return? Why? Which principle does it illustrate?
@@ -380,7 +422,7 @@ f1()
 y
 ```
 
->[]{.answer}
+>[In the `x = {y <- 1; 2}` argument, the global value of y is assigned a value of 1 (overwriting the y <- 10) (UNLESS a user-provided value for x!).  After that, the default for x is assigned 2.  Then the default value for y *inside* the function is assigned 0.  So this should return (by default) a vector c(2, 0).  Calling `y` outside the function will return 1.   NOPE!  The x default isn't evaluated until inside the function environment, so assigns y <- 1 inside the function environment when x is evaluated, and since there is now a value for y, the default is no longer merely a promise and so is not evaluated - resulting in c(2, 1).  The global y is unchanged.]{.answer}
 
 
 4.    In `hist()`, the default value of `xlim` is `range(breaks)`, the default value for breaks is `"Sturges"`, and
@@ -391,7 +433,7 @@ range("Sturges")
 
 Explain how `hist()` works to get a correct `xlim` value.
 
->[]{.answer}
+>[There must be a test inside `hist()` to ensures that the range evaluates to numbers; if not, there must be some default action where it looks at the values of `x`.  NOT QUITE: According to the solutions, the `hist()` function makes sure that `breaks` (not `xlim`) evaluates to a numeric vector (instead of "sturges") *before* the `xlim = range(breaks)` is evaluated, so `xlim` becomes a two-element numeric vector.]{.answer}
 
 
 5.    Explain why this function works. Why is it confusing?
@@ -405,15 +447,28 @@ show_time()
 #> [1] "2021-02-21 19:22:36 UTC"
 ```
 
->[]{.answer}
+>[In the arguments, `x` is set as `stop('Error!')`.  But before `x` is evaluated, `stop()` is redefined, and then when `print(x)` is evaluated, `x` now equals the new definition of `stop()` (which returns the time).]{.answer}
 
 6.    How many arguments are required when calling `library()`?
 
->[]{.answer}
-
+>[You can call `library()` with no arguments and it returns a list of all the packages available.  In the function itself, there are missing() arguments to see if any of the non-defaulted arguments are missing, so it knows how to handle them.  In the help it says it returns an object of class `"libraryIQR"` if called with no arguments.]{.answer}
 
 
 ## 6.6 `...` (dot-dot-dot)
+
+The `...` argument is similar to `vararg`s (`var`iable `arg`uments) in other languages.  This allows you to pass arguments through the function into an inner function, by name.  Two primary use cases:
+
+* function takes a function as an argument - you need to pass add'l arguments to that function.  E.g.:  `lapply` takes as its `FUN` argument the function `mean`, and the `na.rm = TRUE` is in the dots, which get passed to `mean`.
+
+```{r}
+x <- list(c(1, 3, NA), c(4, NA, 6))
+str(lapply(x, mean, na.rm = TRUE))
+#> List of 2
+#>  $ : num 2
+#>  $ : num 5
+```
+
+* Function is an S3 generic, then it probably has methods for different object classes... so the dots allow for any number of different arguments without having to specify for every single object class.
 
 ### 6.6.1 Exercises
 
@@ -431,7 +486,7 @@ mean(1, 2, 3, na.omit = TRUE)
 #> [1] 1
 ```
 
->[]{.answer}
+>[`sum()` takes `...` as its first argument, with only fixed argument as na.rm.  Those `...` can be numeric/complex/logical vectors that get summed.  `mean()` takes `x` as its first arg, which is what gets meaned, and then `...` that are further arguments that don't get counted in the mean.  The `sum(1, 2, 3, na.omit = TRUE)` treats the fourth argument as one of the `...` and interprets it as a logical TRUE therefore 1, so gets added into the sum.  The same argument in `mean` falls into the `...` which are not used in the function so thus doesn't affect the mean.]{.answer}
 
 
 2.    Explain how to find the documentation for the named arguments in the following function call:
@@ -440,12 +495,12 @@ mean(1, 2, 3, na.omit = TRUE)
 plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
 ```
 
->[]{.answer}
+>[Don't bother - just use ggplot!  Looks like `?plot.default` gets you some of those, and clicking on the "other graphical parameters" for `...` might get you the rest of the way (or `?par`)]{.answer}
 
 
 3.    Why does `plot(1:10, col = "red")` only colour the points, not the axes or labels? Read the source code of `plot.default()` to find out.
 
->[]{.answer}
+>[Because you need a different argument? not really all that interested]{.answer}
 
 
 ## 6.7 Exiting a Function
@@ -453,29 +508,95 @@ plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
 
 ### 6.7.1 Implicit versus explicit returns
 
-
+Function implicitly returns result of last evaluated expression in the function; `return()` explicitly returns a value
 
 ### 6.7.2 Invisible values
 
+Visible: calling in interactive context prints the result; can apply `invisible()` to suppress printing the result (though result in still returned)
+
+```{r}
+j04 <- function() invisible(1)
+j04() ### no print
+print(j04()); (j04())
+x <- j04(); x
+```
+
+The assign arrow `<-` returns invisibly:
+
+```{r}
+x <- 2
+(x <- 2)
+```
 
 
 ### 6.7.3 Errors
 
-
+Use `stop()` to terminate execution of a function if it can't complete its task.
 
 ### 6.7.4 Exit handlers
 
+For functions that make temp changes to the global state, what if an error occurs? can muck up that global state.  To undo those changes and restore global state, use `on.exit()` to set up an exit handler, which is executed regardless of how the function exits.
+
+```{r, eval = FALSE}
+j06 <- function(x) {
+  cat("Hello\n")
+  on.exit(cat("Goodbye!\n"), add = TRUE)
+  
+  if (x) {
+    return(10)
+  } else {
+    stop("Error")
+  }
+}
+
+j06(TRUE)
+#> Hello
+#> Goodbye!
+#> [1] 10
+
+j06(FALSE)
+#> Hello
+#> Error in j06(FALSE): Error
+#> Goodbye!
+```
+
+Always use `add = TRUE` in `on.exit()`.
+
+Use `on.exit()` to put clean up code directly next to the code that requires clean up:
+
+```{r}
+cleanup <- function(dir, code) {
+  old_dir <- setwd(dir) ### returns original dir before the change (invisibly)
+  on.exit(setwd(old_dir), add = TRUE)
+  
+  old_opt <- options(stringsAsFactors = FALSE)
+  on.exit(options(old_opt), add = TRUE) ### returns list of previous values (invisibly)
+}
+
+
+with_dir <- function(dir, code) {
+  old <- setwd(dir)
+  on.exit(setwd(old), add = TRUE)
+
+  force(code)
+}
+
+getwd()
+#> [1] "/Users/runner/work/adv-r/adv-r"
+with_dir("~", getwd())
+#> [1] "/Users/runner"
+```
 
 
 ### 6.7.5 Exercises
 
 1.    What does `load()` return? Why don't you normally see these values?
 
->[]{.answer}
+>[Returns a vector of names of the objects created when loading the .Rdata, but invisibly]{.answer}
 
 2.    What does `write.table()` return? What would be more useful?
 
->[]{.answer}
+>[NULL?  maybe return the data written, invisibly? readr does this so you can write out in the middle of a piped workflow, and then continue with the workflow]{.answer}
 
 3.    How does the chdir parameter of `source()` compare to `with_dir()`? Why might you prefer one to the other?
 
