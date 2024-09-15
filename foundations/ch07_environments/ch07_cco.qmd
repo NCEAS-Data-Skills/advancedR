@@ -500,19 +500,100 @@ Executing a function involves two contexts:
 
 ### 7.5.1 Simple call stacks
 
+Example of several function calls:
+
+```{r}
+f <- function(x) {
+  g(x = 2)
+}
+g <- function(x) {
+  h(x = 3)
+}
+h <- function(x) {
+  stop()
+}
+```
+
+Now let's call the top level and use `traceback()` to see where the error occurred:
+
+```{r eval = FALSE}
+f(x = 1)
+#> Error:
+traceback()
+#> 4: stop()
+#> 3: h(x = 3) 
+#> 2: g(x = 2)
+#> 1: f(x = 1)
+```
+
+can also use `lobstr::cst()` to display as a tree:
+
+```{r eval = FALSE}
+h <- function(x) {
+  lobstr::cst()
+}
+f(x = 1)
+#> █
+#> └─f(x = 1)
+#>   └─g(x = 2)
+#>     └─h(x = 3)
+#>       └─lobstr::cst()
+```
+
+To see which function called which other function called which yet other function... etc.  `cst()` displays starting at the top, rather bottom up like `traceback()`, which might make more sense.
 
 ### 7.5.2 Lazy evaluation
 
+Lazy eval vs. "eager" eval.  Here, `x` isn't evaluated till function `c()`, and then it gets its own branch of a stack:
+
+```{r eval = FALSE}
+a <- function(x) b(x)
+b <- function(x) c(x)
+c <- function(x) x
+
+a(f())
+#> █
+#> ├─a(f())
+#> │ └─b(x)
+#> │   └─c(x)
+#> └─f()
+#>   └─g(x = 2)
+#>     └─h(x = 3)
+#>       └─lobstr::cst()
+```
 
 ### 7.5.3 Frames
 
+Each level in a stack is called a "frame" - an evaluation context.  A frame has three key components:
+
+* Expression (labeled with `expr`) - the actual function call.  
+* Environment (labeled with `env`) - the execution env of the function.  Exceptions: global frame gets global env; `eval()` creates a new frame.
+* Parent - the previous call in the stack.
 
 ### 7.5.4 Dynamic Scope
+
+"Looking up variables in the calling stack rather than in the enclosing environment is called dynamic scoping" - come back to this in Chapter 20.
 
 ### 7.5.5 Exercises
 
 1. Write a function that lists all the variables defined in the environment in which it was called. It should return the same results as `ls()`.
 
->[]{.answer}
+>[Seems like this should use the `caller_env()` function:]{.answer}
+
+```{r}
+caller_vars <- function() {
+  x <- caller_env()
+  return(names(caller_env()))
+}
+
+y <- caller_vars()
+```
+
 
 ## 7.6 As data structures
+
+Environments as data structures - they have [reference semantics](https://adv-r.hadley.nz/names-values.html#env-modify) - i.e., modify in place rather than copy-on-modify - so can help solve certain problems:
+
+* avoiding copies of large data (recommend R6 objects which are built on environments, rather than bare environments - see ch 14).
+* maintaining state within a package - maintaining variable values between function calls (a la `provRmd` package).
+* as a hashmap - hashmap is a data structure that allows finding an object based on name to occur in constant amount of time - environments have this property so can be used to generate hashmap-like results?
