@@ -10,7 +10,8 @@ Solutions: [advanced-r-solutions.rbind.io](https://advanced-r-solutions.rbind.io
 ## Sub-folder Explanations
 
 - `_products/` -- Potential products from this group to share with the broader NCEAS community
-- `foundations/` -- Notes and exercises for chapters 2-8
+- `1_foundations/` -- Notes and exercises for chapters 2-8
+- `2_functional_programming/` -- Notes and exercises for chapters 9-11
 - `meeting_notes/` -- Notes taken during meetings
 
 ## Meeting Schedule & Topics

@@ -1,16 +1,19 @@
 ---
-title: "Chapter 8 notes: conditions"
+title: "Chapter 9 notes: Functionals (and functional programming introduction"
 author: "Casey O'Hara"
 format: 
   html:
     embed-resources: true
 execute:
   message: !expr NA
+  warning: false
 editor: source
 ---
 
 ```{r}
 library(rlang)
+library(tidyverse)
+library(purrr)
 ```
 
 ```{scss custom-themes, echo=FALSE}
@@ -20,334 +23,295 @@ library(rlang)
 }
 ```
 
-# Conditions
+**Introduction notes**
+
+Functional *language* vs. functional programming *style*.  Traditional weak areas of functional languages (poorer performance, unpredictable memory usage) have been reduced in recent years.  Functional programming is complementary to object-oriented programming, the dominant paradigm of the last few decades.
+
+## Functional programming languages
+
+Two main features that generally define functional programming languages:
+
+* **first-class** functions: functions are like any other data structure - assign to variables, store in lists, pass as arguments, return as a result of a function.
+* **pure** functions as a requirement 
+    * output only depends on inputs - run it twice with the same inputs, get exactly the same output (excludes random generators, system time, etc)
+    * no side effects, like changing value of a global variable, writing to disk, or displaying to screen (excludes things like `print`, `write_csv`, `<-`)
+
+NOTE: R does not require pure functions, so not a strict functional programming language.
+
+* you don't *have* to write pure functions, but usually *should*
+
+## Functional style
+
+Decomposing a big problem into smaller pieces, then solving each piece with a function or combo of functions.  This section overview:
+
+* Chapter 9: Functionals - functions that take another function as an argument (e.g., `lapply()`) as *input* - generalize a function that works for one input to work across many inputs
+* Chapter 10: function factories - functions that create functions as *output*
+* Chapter 11: function operators - functions that take functions as *input* and produce functions as *output*
+
+Collectively, these are **higher-order functions**
+
+# Functionals
 
 ## Introduction
 
-R exception handling is similar to Lisp.
-
-**Signals** to alert the user about unusual conditions:
-
-* `stop()` for errors
-* `warning()` for warnings
-* `message()` for messages
-
-And then **handlers** to deal with them:
-
-* `tryCatch()`
-* `withCallingHandlers()`
-
-## Signalling conditions
-
-* Errors: no way for a function to continue; execlution must stop
-* Warnings: something is wrong, but the function has been able to at least partially recover, and can continue
-* Messages: let the user know some action has been performed on their behalf...
-
-### Errors
-
-Errors are thrown by `stop()` - and by default, includes the function call.  Consider using `call. = FALSE` to omit the context:
-
-```{r eval = FALSE}
-f <- function() g()
-g <- function() h()
-h <- function() stop("This is an error!")
-
-f()
-#> Error in h(): This is an error!
-
-h <- function() stop("This is an error!", call. = FALSE)
-f()
-#> Error: This is an error!
-```
-
-Another option is `rlang::abort()` which defaults to NOT including the function call, and has other advantages to be seen later.
-
-Writing error messages is hard, because it's hard to predict the user's mental model of what's going on in the function.  Check out the tidyverse style guide for suggestions on error messages: [https://style.tidyverse.org/error-messages.html](https://style.tidyverse.org/error-messages.html)
-
-### Warnings
-
-Signalled by `warning()` - something's wrong but partial recovery and able to continue.  By default, warnings are printed only when control of the execution returns to the top level.  Can override this with the `warn` option: `options(warn = 1)`.  `rlang::warn()` is the rlang equivalent.
-
-Many warnings in R would probably better be set as errors, e.g.:
-
-```{r eval = FALSE}
-file.remove("this-file-doesn't-exist")
-#> Warning in file.remove("this-file-doesn't-exist"): cannot remove file 'this-
-#> file-doesn't-exist', reason 'No such file or directory'
-#> [1] FALSE
-
-lag(1:3, k = 1.5)
-#> Warning in lag.default(1:3, k = 1.5): 'k' is not an integer
-#> [1] 1 2 3
-#> attr(,"tsp")
-#> [1] -1  1  1
-
-as.numeric(c("18", "30", "50+", "345,678"))
-#> Warning: NAs introduced by coercion
-#> [1] 18 30 NA NA
-```
-
-Cases where warnings ARE appropriate:
-
-* Deprecation: still want older code to work but encourage the user to switch to an updated function
-* Full recovery: you are resonably certain the problem is recoverable - if 100% sure of recovery, no need for a warning, and if less certain, an error is better!
-
-### Messages
-
-Unlike warnings, messages are displayed immediately and do not have a `call.` argument.  When to use messages:
-
-* When a default argument is non-trivial and you want to let the user know the default value.
-* When writing a function that would do things otherwise silently, such as writing files or calling a web API, give the user some info to let them know what's going on
-* When starting a long process with no intermediate output, and you're unable to do a progress bar
-* When writing a package, sometimes you want a message on loading (e.g., `here() starts at C:/Users/casey/Documents/github/advancedR`)
-
-If a function produces message, a good idea to offer an option to suppress, like `quiet = TRUE`.
-
-Compare `cat()` vs `message()`: `cat()` for when the function is supposed to print to the console; `message()` when the primary goal is something else.
-
-NOTE: in quarto, the default R Markdown setting of `knitr::opts_chunk$set(message = FALSE)` doesn't work the same way it used to - in RMarkdown, excludes messages from rendered output but still displays in console while knitting (maybe no longer true, with new knitr?).  But in Quarto YAML header, 
-
-```r
----
-blah
-execute:
-  message: false
----
-```
-
-omits ALL messages including in console during knitting.  Instead use `#| message: !expr NA` in the code chunk?  in the header doesn't seem to work correctly?
+**Functional** takes a function as an unput and returns a vector as output.  Easy example: tell the function a function, and it applies that function to a set of 1000 uniform random numbers:
 
 ```{r}
-#| message: !expr NA
-#| warning: !expr NA
-message('HERE IS A MESSAGE')
+randomise <- function(f) f(runif(1e3))
+randomise(mean)
+#> [1] 0.506
+randomise(mean)
+#> [1] 0.501
+randomise(sum)
+#> [1] 489
 
-warning('HERE IS A WARNING')
 ```
+
+Common use of functionals is as an alternative to loops.  Loops are not inherently slow in R - but they don't cleanly convey what should be done with the results.
+
+## My first functional: `map()`
+
+`purrr::map()` takes a vector and a function, and calls the function once for each element of the vector, and returns the results in a list.
+
+> In other words, `map(1:3, f)` is equivalent to `list(f(1), f(2), f(3))`.
+
+"Map" used in the mathematical sense, an operation that associates each element of a given set with one or more elements of a second set.  `map()` is essentially equivalent to `lapply()` - but the `map()` functions offer some additional helpers.
+
+### Producing atomic vectors
+
+`map()` always returns a list, which works because you can put anything into the list elements.  But for simpler cases, where the results are always a known atomic vector type, use a variant:  `map_chr`, `map_lgl`, `map_int`, `map_dbl` to return an atomic vector of that type.  Note that `sapply` and `vapply` can return atomic vectors - but a little less cleanly than the `map_x` variants.
+
+### Anonymous functions and shortcuts
+
+Create an inline anonymous function within map() - 
+
+```{r}
+map_dbl(mtcars, function(x) length(unique(x)))
+#>  mpg  cyl disp   hp drat   wt qsec   vs   am gear carb 
+#>   25    3   27   22   22   29   30    2    2    3    6
+```
+
+or use the shortcut syntax - 
+
+```{r}
+map_dbl(mtcars, ~ length(unique(.x)))
+#>  mpg  cyl disp   hp drat   wt qsec   vs   am gear carb 
+#>   25    3   27   22   22   29   30    2    2    3    6
+```
+
+Use `.` (or better, `.x`) for one argument functions, `.x` and `.y` for two argument functions, and `..1`, `..2`, `..3`, etc, for functions with an arbitrary number of arguments.
+
+Skipping over some of the other map stuff for now!
 
 ### Exercises
 
-Write a wrapper around `file.remove()` that throws an error if the file to be deleted does not exist.
+1. Use `as_mapper()` to explore how purrr generates anonymous functions for the integer, character, and list helpers. What helper allows you to extract attributes? Read the documentation to find out.
+
+> [The `pluck()` helper extracts info about the object - and `as_mapper()` will take a vector (int, chr, list) and create a pluck function to access elements.  `attr_getter()` allows you to create a function to access the attributes.  E.g., `get_rownames <- attr_getter("row.names"); get_rownames(mtcars)`.  Or for another example, see this, where `attr_getter` helps create a compact inline function:]{.answer}
 
 ```{r}
-file_remove <- function(f) {
-  if(!file.exists(f)) stop("File doesn't exist: ", f)
-  file.remove(f)
+# Define custom accessor function
+get_class <- function(x) attr(x, "class")
+pluck(mtcars, get_class)
+#> [1] "data.frame"
+
+# Use attr_getter() as a helper
+pluck(mtcars, attr_getter("class"))
+#> [1] "data.frame"
+```
+
+
+2. `map(1:3, ~ runif(2))` is a useful pattern for generating random numbers, but `map(1:3, runif(2))` is not. Why not? Can you explain why it returns the result that it does?
+
+> [The first appropriately sets up an anonymous function using the tilde.  The second does not; and as_mapper() will interpret the `runif(2)` as a vector of two random numbers, instead of a function or formula, and create an extractor function instead, using the random numbers as indices.  According to the answer doc, it should return NULLs, but instead returns the original index; is this a change in default behavior of pluck (looks like default is still NULL) or map?]{.answer}
+
+```{r}
+as_mapper(runif(2))
+# function (x, ...) 
+# pluck_raw(x, list(0.833373410394415, 0.919780668802559), .default = NULL)
+# <environment: 0x00000236c08b2cb0>
+```
+
+
+3. Use the appropriate `map()` function to:
+    a. Compute the standard deviation of every column in a numeric data frame.
+    b. Compute the standard deviation of every numeric column in a mixed data frame. (Hint: you’ll need to do it in two steps.)
+    c. Compute the number of levels for every factor in a data frame.
+
+```{r}
+map_dbl(mtcars, sd)
+map_dbl(starwars %>% select(where(is.numeric)), sd, na.rm = TRUE)
+map_int(palmerpenguins::penguins %>% select(where(is.factor)), ~length(levels(.x)))
+```
+
+>[The `select(where(is.xxx))` is different from the given answer, which uses `map_lgl` to create a vector of logical that identifies which columns are numeric/factor/whatever...]{.answer}
+
+4. The following code simulates the performance of a t-test for non-normal data. Extract the p-value from each test, then visualise.
+
+```{r}
+trials <- map(1:100, ~ t.test(rpois(10, 10), rpois(7, 10)))
+```
+
+>[Each list element contains the model output for that trial... p.value is not an attribute, but it's also not the element itself; maybe just map across all of them and pull the p value out]{.answer}
+
+```{r}
+p <- map_dbl(trials, .f = ~.x[['p.value']]) ### or ~ .x$p.value
+hist(p)
+```
+
+5. The following code uses a map nested inside another map to apply a function to every element of a nested list. Why does it fail, and what do you need to do to make it work?
+
+```{r}
+x <- list(
+  list(1, c(3, 9)),
+  list(c(3, 6), 7, c(4, 7, 6))
+)
+
+triple <- function(x) x * 3
+```
+
+```{r eval = FALSE}
+map(x, map, .f = triple)
+#> Error in .f(.x[[i]], ...): unused argument (function (.x, .f, ...)
+#> {
+#> .f <- as_mapper(.f, ...)
+#> .Call(map_impl, environment(), ".x", ".f", "list")
+#> })
+```
+
+>[Thinking that the `.f = triple` overrules the positional assignment of `map` as the desired function.  Might need to define that first one a little differently to make the .f thing explicit]{.answer}
+
+```{r}
+map(x, .f = ~ map(.x, .f = triple))
+```
+
+6. Use map() to fit linear models to the mtcars dataset using the formulas stored in this list:
+
+```{r}
+formulas <- list(
+  mpg ~ disp,
+  mpg ~ I(1 / disp),
+  mpg ~ disp + wt,
+  mpg ~ I(1 / disp) + wt
+)
+```
+
+>[Here we want to apply the formulas in the list as the varying argument to the lm() function, with mtcars as the non-varying argument.  Because the outputs are linear model objects, use plain ol' `map()`.]{.answer}
+
+```{r}
+map(formulas, .f = ~lm(formula = .x, data = mtcars))
+```
+
+7. Fit the model `mpg ~ disp` to each of the bootstrap replicates of `mtcars` in the list below, then extract the 
+R^2^ of the model fit (Hint: you can compute the R^2^ with `summary()`.)
+
+```{r}
+bootstrap <- function(df) {
+  df[sample(nrow(df), replace = TRUE), , drop = FALSE]
 }
+
+bootstraps <- map(1:10, ~ bootstrap(mtcars))
+
+mdls <- map(bootstraps, .f = ~lm(formula = mpg ~ disp, data = .x))
+
+r2 <- map_dbl(mdls, .f = ~summary(.x)$adj.r.squared)
+
+### or in a piped sequence:
+bootstraps %>%
+  map(~ lm(mpg ~ disp, data = .x)) %>%
+  map(summary) %>%
+  map_dbl("r.squared")
 ```
 
+## Purrr style
 
-What does the `appendLF` argument to `message()` do? How is it related to `cat()`?
-
-> [`appendLF` will add new lines between string arguments to message; similar (looks like) for the `fill` argument for `cat()` to drive auto line feeds...]{.answer}
-
-## Ignoring conditions
-
-Use `try()` to ignore errors; use `suppressWarnings()` or `suppressMessages()` to suppress those things.
-
-`try()` will allow a function to error out, but keep going.  Usefull pattern/approach: you can assign a result to an object inside the try call, but first define a default value in case the call fails.  This works because the argument is evaluated in the calling environment, not the function - so if it succeeds, the default will be overwritten with the successful result in the calling environment, but if it fails, the error keeps the default from being overwritten (and then the `try` allows it to keep going anyway).
+Using purrr functions chained together to create multiple but simpler steps.  Here, split mtcars by cylinders then do a linear model for each of mpg as a function of wt, then extract the slopes.
 
 ```{r}
-default <- NULL
-try(default <- read.csv("possibly-bad-input.csv"), silent = TRUE)
+by_cyl <- split(mtcars, mtcars$cyl)
+
+by_cyl %>% 
+  map(~ lm(mpg ~ wt, data = .x)) %>% 
+  map(coef) %>%  ### apply the coefficient function to each of the linear models
+  map_dbl(2)     ### this one means, pluck index 2, i.e., the second coefficient, i.e., slope
+#>     4     6     8 
+#> -5.65 -2.78 -2.19
 ```
 
-## Handling conditions
+Using apply functions (in base R style, no pipes!) or a loop, probably fewer iterations with more going on in each iteration.
 
-To define custom behaviours when an error occurs, you can use `tryCatch()` and `withCallingHandlers()`.
+## Map variants
 
-```{r}
-tryCatch(
-  error = function(cnd) {
-    # code to run when error is thrown
-  },
-  code_to_run_while_handlers_are_active
-)
+Vanilla `map()` has the four atomic variants `map_lgl`, `map_chr`, `map_int`, `map_dbl`.  But more variants:
 
-withCallingHandlers(
-  warning = function(cnd) {
-    # code to run when warning is signalled
-  },
-  message = function(cnd) {
-    # code to run when message is signalled
-  },
-  code_to_run_while_handlers_are_active
-)
-```
+* `modify()` for output type same as input type
+* `map2()` for iterating over two inputs
+* `imap()` for iterating using an index
+* `walk()` to return nothing (i.e., function is used for side effects like writing a file)
+* `pmap()` to iterate over any number of inputs
 
-> * `tryCatch()` defines **exiting** handlers; after the condition is handled, control returns to the context where `tryCatch()` was called. This makes `tryCatch()` most suitable for working with errors and interrupts, as these have to exit anyway.
-* `withCallingHandlers()` defines **calling** handlers; after the condition is captured control returns to the context where the condition was signalled. This makes it most suitable for working with non-error conditions.
-
-### Condition objects
-
-COnditions create objects with information about the condition.  We can use `rlang::catch_cnd()` to see some of that info:
-
-```{r}
-cnd <- rlang::catch_cnd(stop('oops'))
-str(cnd)
-```
-
-Error message, can be grabbed using `conditionMessage(cnd)`, and call that triggered the condition, often NULL; use `conditionCall(cnd)` to grab it.  Also a class (therefore an S3 object): `class(cnd)`.
-
-### Exiting handlers
-
-This is `tryCatch()` - overwrite the default error behavior.  The code always exits once the condition has been caught, useful with errors since errors generally exit too.  This code returns NA instead of throwing an error:
-
-```{r}
-f3 <- function(x) {
-  tryCatch(
-    error = function(cnd) NA,
-    log(x)
-  )
-}
-
-f3("x")
-#> [1] NA
-```
-
-If no condition, or the condition class (error, warning, message) doesn't match the handler name, no problems.  Argument to the handler function is the condition object, and `cnd` is typically used as convention.
-
-There is also an argument called `finally` which is like an `on.exit()` call, always runs whether the intended expression succeeds or fails - good for things like cleanup, deleting files, or closing connections.
-
-### Calling handlers
-
-Calling handlers don't exit after the condition is caught - they keep going, so more useful in contexts like messages and warnings.  Compare results of `tryCatch()` and `withCallingHandlers()` - `trycatch()` catches the first message and stops, `withCallingHandlers()` catches the first message, reports it, then catches the second message and reports it.
-
-```{r}
-tryCatch(
-  message = function(cnd) cat("Caught a message!\n"), 
-  {
-    message("Someone there?")
-    message("Why, yes!")
-  }
-)
-#> Caught a message!
-
-withCallingHandlers(
-  message = function(cnd) cat("Caught a message!\n"), 
-  {
-    message("Someone there?")
-    message("Why, yes!")
-  }
-)
-#> Caught a message!
-#> Someone there?
-#> Caught a message!
-#> Why, yes!
-```
-
-Some stuff about handlers "bubbling up" to higher levels; seems like an extension to worry about later on.
-
-### Call stacks
-
-Again, pretty specialized (Hadley: "These differences are generally not important..."), worry about this later on...
+|                      |  List	|     Atomic    |	Same type |	Nothing  |
+|:---                  |:------:|:-------------:|:----------:|:-------:|
+| One argument       	 | map()	| map_lgl(), …  | modify()	 | walk()  |
+| Two arguments	       | map2()	| map2_lgl(), … | modify2()	 | walk2() |
+| One argument + index | imap()	| imap_lgl(), … | imodify()	 | iwalk() |
+| N arguments	         | pmap()	| pmap_lgl(), … |     —	     | pwalk() |
 
 ### Exercises
 
-1. What extra information does the condition generated by `abort()` contain compared to the condition generated by `stop()` i.e. what’s the difference between these two objects? Read the help for `?abort` to learn more.
+1. Explain the results of `modify(mtcars, 1)`.
+
+> [Thinking the second argument, 1, is the "function", so it will pluck the first index of each column of mtcars... and then uses that to modify each element in the dataframe since the final structure needs to be the same as the initial structure.]{.answer}
+
+2. Rewrite the following code to use `iwalk()` instead of `walk2()`. What are the advantages and disadvantages?
+
 ```{r}
-catch_cnd(stop("An error"))
-catch_cnd(abort("An error"))
+temp <- tempfile(); dir.create(temp)
+cyls <- split(mtcars, mtcars$cyl)
+paths <- file.path(temp, paste0("cyl-", names(cyls), ".csv"))
+walk2(cyls, paths, write.csv)
+# list.files(temp)
+
+names(cyls) <- paths 
+iwalk(cyls, .f = ~write.csv(.x, .y))  ### .y is names(.x) which has been set to paths
+
+unlink(temp, recursive = TRUE)
 ```
 
->[Looks like `abort()` saves a traceback/condition metadata - class, metadata, call, and parent, as well as the message and type of condition...]{.answer}
-
-2. Predict the results of evaluating the following code
+3. Explain how the following code transforms a data frame using functions stored in a list.
 
 ```{r}
-show_condition <- function(code) {
-  tryCatch(
-    error = function(cnd) "error",
-    warning = function(cnd) "warning",
-    message = function(cnd) "message",
-    {
-      code
-      NULL
-    }
-  )
-}
-
-show_condition(stop("!"))     ### 'error'
-show_condition(10)            ### 10; NULL   ### NOPE just NULL - the 10 is evaluated but not returned
-show_condition(warning("?!")) ### 'warning'
-show_condition({
-  10
-  message("?")
-  warning("?!")
-})                            ### 10; 'message' ### NOPE just 'message'
-```
-
-3. Explain the results of running this code:
-
-```{r}
-withCallingHandlers(
-  message = function(cnd) message("b"),
-  withCallingHandlers(
-    message = function(cnd) message("a"),
-    message("c")
-  )
+trans <- list(
+  disp = function(x) x * 0.0163871,
+  am = function(x) factor(x, labels = c("auto", "manual"))
 )
-#> b
-#> a
-#> b
-#> c
+
+nm <- names(trans)
+mtcars[nm] <- map2(trans, mtcars[nm], function(f, var) f(var))
 ```
 
->[The internal thing is run first; intercepts the message ('c') and returns message('a'), which is captured by the upper level thing, which responds with message('b') and then reports the message('a'); then the message('c') is reported up to the upper level, which is intercepted and responds message('b') again, then reports the message('c').]{.answer}
+> [`map2(trans, mtcars[nm]...)` will iterate over the two transforms according to the column name that matches the transforms.  The `function(f, var) f(var)` will receive `f` as the transform function and `var` as the variable to be transformed; then the function itself is defined as applying function `f` to variable `var`.]{.answer}
 
-4. Read the source code for `catch_cnd()` and explain how it works.  NOTE: original code for catch_cnd() was more simple:
+Compare and contrast the `map2()` approach to this `map()` approach:
 
 ```{r}
-catch_cnd <- function(expr) {
-  tryCatch(
-    condition = function(cnd) cnd,
-    {
-      force(expr)
-      return(NULL)
-    }
-  )
-}
+mtcars[nm] <- map(nm, ~ trans[[.x]](mtcars[[.x]]))
 ```
 
-> [Just a wraparound the tryCatch() function, which would force the expression, and if it resulted in a condition, would return the condition, and if not, would return NULL as the condition.]{.answer}
+> [This version instead iterates over the names of the two transforms, then defines an anonymous function that applies the function in `trans[[.x]]` to the variable column `mtcars[[.x]]`.]{.answer}
 
-5. How could you rewrite `show_condition()` to use a single handler?
+4. What does `write.csv()` return, i.e. what happens if you use it with `map2()` instead of `walk2()`?
 
-```{r}
-show_condition <- function(code) {
-  tryCatch(
-    condition = function(cnd) class(cnd)[2],
-    {
-      code
-      NULL
-    }
-  )
-}
-show_condition(message('thing1'))
-show_condition(warning('thing2'))
-show_condition(stop('thing3'))
-```
+>[`write.csv()` returns NULL, so you'd end up with a bunch of NULL values instead of just not returning anything.]{.answer}
 
-## Custom conditions
+## Reduce family
 
-Custom conditions can be used to contain better metadata in the condition object, and/or to return more informative error messages.  They allow handlers to do a lot more since there's more information to work with.  Hadley's recommened structure using the functionality of the `rlang::`abort()` function:
+Not seeing the value in this at the present, so skip and come back if it becomes interesting...
 
-> name of the type of error comes first, followed by the user-facing text, followed by custom metadata
+## Predicate functionals
 
-```{r eval = FALSE}
-abort(
-  "error_not_found",
-  message = "Path `blah.csv` not found", 
-  path = "blah.csv"
-)
-#> Error: Path `blah.csv` not found
-```
+A **predicate** is a function that returns a single `TRUE` or `FALSE` value, like `is.character()`, and a predicate **matches** a vector if it returns `TRUE`.
 
-Interesting and potentially useful later, but gonna skip for now.
-
-## Applications
-
-Again, interesting and potentially useful for later, but let's revisit at that time.
-
+### Basics
 
 
