@@ -1,0 +1,31 @@
+---
+title: "Functional Programming Chapters -- Notes & Exercises"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+```{scss custom_themes, echo=FALSE}
+.answer { 
+  color: #b5179e;
+  font-weight: bolder;
+}
+```
+
+## Chapter 9: Functionals
+
+{{< include ch09_functionals/ch09_njl.qmd >}}
+
+## Chapter 10: Function Factories
+
+
+
+## Chapter 11: Function Operators
+
+
+
+
+
+
+
