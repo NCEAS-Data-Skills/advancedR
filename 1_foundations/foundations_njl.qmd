@@ -40,11 +40,3 @@ code-overflow: wrap
 ## Chapter 8: Conditions
 
 {{< include ch08_conditions/ch08_njl.qmd >}}
-
-
-
-
-
-
-
-
