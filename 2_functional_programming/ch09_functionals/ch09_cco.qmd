@@ -314,4 +314,95 @@ A **predicate** is a function that returns a single `TRUE` or `FALSE` value, lik
 
 ### Basics
 
+A **predicate functional** applies a predicate to each element of a vector.  Seven functions in `purrr`:
 
+* `some(.x, .p)`, `every(.x, .p)`, and `none(.x, .p)` return `TRUE` if any, all, or no elements match, respectively.
+* `detect(.x, .p)` and `detect_index(.x, .p)` return the value (vector) and the index of the first match, respectively.
+* `keep(.x, .p)` and `discard(.x, .p)` do their appropriate thing with all matching elements.
+
+Example:
+
+```{r}
+df <- data.frame(x = 1:3, y = c("a", "b", "c"))
+detect(df, is.factor)
+#> NULL
+detect_index(df, is.factor)
+#> [1] 0
+detect(df, is.character); detect_index(df, is.numeric)
+
+str(keep(df, is.character))
+#> 'data.frame':    3 obs. of  0 variables
+str(discard(df, is.character))
+#> 'data.frame':    3 obs. of  2 variables:
+#>  $ x: int  1 2 3
+#>  $ y: chr  "a" "b" "c"
+```
+
+Can use predicates in `map_if()` and `modify_if()` to transform only those elements that match the predicate.
+
+### Exercises
+
+1. Why isn’t `is.na()` a predicate function? What base R function is closest to being a predicate version of `is.na()`?
+
+> [`is.na()` returns a TRUE or FALSE for each element in a vector, not a single value.  Something like `any(is.na())` or `all(is.na())` would return a single value, more predicate-like.]{.answer}
+
+2. `simple_reduce()` has a problem when `x` is length 0 or length 1. Describe the source of the problem and how you might go about fixing it.
+
+```{r}
+simple_reduce <- function(x, f) {
+  out <- x[[1]]
+  for (i in seq(2, length(x))) {
+    out <- f(out, x[[i]])
+  }
+  out
+}
+```
+
+>[The for loop will iterate over 2:0 or 2:1 for those values of x.  Could put a check to make sure length(x) is not 0 or 1, returning some appropriate value.]{.answer}
+
+3. Implement the `span()` function from Haskell: given a list `x` and a predicate function `f`, `span(x, f)` returns the location of the longest sequential run of elements where the predicate is true. (Hint: you might find `rle()` helpful.)
+
+```{r}
+span <- function(x, p) {
+  true_vec <- map(x, p)
+  asdf <- rle(as.integer(true_vec))
+}
+
+x <- 1:20
+p = function(x) {x %% 3 == 0 | x %% 4 == 0 | x %% 5 == 0}
+```
+
+4. Implement `arg_max()`. It should take a function and a vector of inputs, and return the elements of the input where the function returns the highest value. For example, `arg_max(-10:5, function(x) x ^ 2)` should return -10. `arg_max(-5:5, function(x) x ^ 2)` should return c(-5, 5). Also implement the matching `arg_min()` function.
+
+```{r}
+arg_max <- function(x, f) {
+  y <- map_dbl(x, .f - f)
+  return(x[y == max(y)])
+}
+
+arg_min <- function(x, f) {
+  y <- map_dbl(x, .f - f)
+  return(x[y == min(y)])
+}
+```
+
+
+5. The function below scales a vector so it falls in the range [0, 1]. How would you apply it to every column of a data frame? How would you apply it to every numeric column in a data frame?
+
+```{r}
+scale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+
+mtcars_rescale <- modify_if(mtcars, is.numeric, scale01)
+### fails on the `am` factor column otherwise
+
+peng <- palmerpenguins::penguins
+peng_rescale <- modify_if(peng, is.numeric, .f = scale01)
+
+```
+
+## Base functionals
+
+Let's skip this one too - seems highly specialized in a way that I won't likely need
