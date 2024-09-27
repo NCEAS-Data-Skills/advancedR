@@ -4,7 +4,8 @@ project:
   output-dir: docs
   render: 
     - index.qmd
-    - foundations/foundations_njl.qmd
+    - 1_foundations/foundations_njl.qmd
+    - 2_functional_programming/functional-programming_njl.qmd
     - _products
 
 execute:
@@ -20,7 +21,11 @@ website:
       - text: "Foundations"
         menu: 
           - text: "Lyon Notes"
-            href: foundations/foundations_njl.qmd
+            href: 1_foundations/foundations_njl.qmd
+      - text: "Functional Programming"
+        menu: 
+          - text: "Lyon Notes"
+            href: 2_functional_programming/functional-programming_njl.qmd
     right:
       - text: "Highlights"
         menu: 
