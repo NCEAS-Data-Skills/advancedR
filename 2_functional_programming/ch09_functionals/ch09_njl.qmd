@@ -1,0 +1,94 @@
+
+```{r 09-libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+### 9.1 Introduction
+
+
+### 9.2 Hadley's First Funtional: `map`
+
+#### 9.2.1 Producing Atomic Vectors
+
+
+#### 9.2.2 Anonymous Functions & Shortcuts
+
+
+#### 9.2.3 Passing Arguments with `...`
+
+
+#### 9.2.4 Argument Names
+
+
+#### 9.2.5 Varying Another Argument
+
+
+#### 9.2.6 Exercises
+
+### 9.3 `purrr` Style
+
+
+### 9.4 `map` Variants
+
+#### 9.4.1 Same Type of Input/Output: `modify`
+
+#### 9.4.2 Two inputs: `map2` & Friends
+
+
+#### 9.4.3 No outputs: `walk` & Friends
+
+
+#### 9.4.4 Iterating Over Values & Indices
+
+#### 9.4.5 Any Number of Inputs: `pmap` & Friends
+
+
+#### 9.4.6 Exercises
+
+### 9.5 `reduce` Family
+
+#### 9.5.1 Basics
+
+
+#### 9.5.2 Accumulate
+
+
+#### 9.5.3 Output Types
+
+
+#### 9.5.4 Multiple Inputs
+
+
+#### 9.5.5 Map-Reduce
+
+
+### 9.6 Predicate Functionals
+
+#### 9.6.1 Basics
+
+#### 9.6.2 Map Variants
+
+
+#### 9.6.3 Exercises
+
+
+### 9.7 Base Functionals
+
+
+#### 9.7.1 Matrices & Arrays
+
+
+#### 9.7.2 Mathematical Concerns
+
+
+#### 9.7.3 Exercises
+
+
+
+
+
