@@ -1,0 +1,25 @@
+
+```{r 10-libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+### 10.1 Introduction
+
+
+### 10.2 Factory Fundamentals
+
+
+### 10.3 Graphical Factories
+
+
+### 10.4 Statistical Factories
+
+
+### 10.5 Function Factors + Functionals
+
+
