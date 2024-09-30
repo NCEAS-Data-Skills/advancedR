@@ -120,23 +120,67 @@ bootstraps <- purrr::map(.x = 1:10, .f = ~ bootstrap(mtcars))
 
 ### 9.3 `purrr` Style
 
+This section of the book shows a nice example of how `purrr` can be used to replace a relatively complex series of operations (that could be a moderately complex `for` loop instead)
 
 ### 9.4 `map` Variants
 
+There are 23 types of `map` variant. There's a neat summary table of how these differ based on the number and type of inputs and outputs [here](https://adv-r.hadley.nz/functionals.html#map-variants).
+
 #### 9.4.1 Same Type of Input/Output: `modify`
+
+`modify` ensures the output is the same type as the input (e.g., `map` across columns of a dataframe returns a list while `modify` returns another dataframe).
 
 #### 9.4.2 Two inputs: `map2` & Friends
 
+`map2` accepts two inputs and will recycle them as needed to ensure that both are the same length.
 
 #### 9.4.3 No outputs: `walk` & Friends
 
+`walk` is called for "side-effects"--like saving something to disk--which can be a nice alternative to returning `NULL`.
 
 #### 9.4.4 Iterating Over Values & Indices
 
+`imap` is like `map` except that it iterates across values and indices in parallel.
+
 #### 9.4.5 Any Number of Inputs: `pmap` & Friends
 
+`pmap` supports more varying arguments than `map2` and allows the user a greater degree of control because you can name the components of the input list.
 
 #### 9.4.6 Exercises
+
+1. Explain the results of `modify(mtcars, 1)`.
+
+2. Rewrite the following code to use `iwalk` instead of `walk2`. What are the advantages and disadvantages?
+
+```{r 09-map-vars-q2}
+#| eval: false
+
+cyls <- split(mtcars, mtcars$cyl)
+paths <- file.path(temp, paste0("cyl-", names(cyls), ".csv"))
+walk2(cyls, paths, write.csv)
+```
+
+3. Explain how the following code transforms a data frame using functions stored in a list. Then compare and contrast the `map2` approach to the provided `map` approach.
+
+```{r 09-map-vars-q2}
+#| eval: false
+
+# First code bit:
+trans <- list(
+  disp = function(x) x * 0.0163871,
+  am = function(x) factor(x, labels = c("auto", "manual"))
+)
+
+nm <- names(trans)
+mtcars[nm] <- map2(trans, mtcars[nm], function(f, var) f(var))
+
+
+# `map` approach:
+mtcars[nm] <- map(nm, ~ trans[[.x]](mtcars[[.x]]))
+```
+
+4. What does `write.csv` return, i.e. what happens if you use it with `map2` instead of `walk2`?
+
 
 ### 9.5 `reduce` Family
 
