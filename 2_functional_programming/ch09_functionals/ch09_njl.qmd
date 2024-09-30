@@ -162,7 +162,7 @@ walk2(cyls, paths, write.csv)
 
 3. Explain how the following code transforms a data frame using functions stored in a list. Then compare and contrast the `map2` approach to the provided `map` approach.
 
-```{r 09-map-vars-q2}
+```{r 09-map-vars-q3}
 #| eval: false
 
 # First code bit:
