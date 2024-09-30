@@ -186,18 +186,23 @@ mtcars[nm] <- map(nm, ~ trans[[.x]](mtcars[[.x]]))
 
 #### 9.5.1 Basics
 
+`reduce` calls a function on a pair of values from the input vector at a time. Angel Chen had a nice use-case of this where you could `join` a series of dataframes by the same set of index columns in one step rather than several separate pairwise joins.
 
 #### 9.5.2 Accumulate
 
+`accumulate` is a variant of `reduce` where the product of each pair of inputs is sequentially stored as elements of a list. Looking "down" the list shows the intermediaries that `reduce` silently skips.
 
 #### 9.5.3 Output Types
 
+If the input vector is length 0 you will get an error unless you specify the `.init` argument (in which case that value will be returned).
 
 #### 9.5.4 Multiple Inputs
 
+`reduce2` allows specification of a second input that varies with each pairwise step inside `reduce`. This means the second input should have one fewer element than the first.
 
 #### 9.5.5 Map-Reduce
 
+You could combine `map` and `reduce` to separately compute useful summary values across multiple datasets (perhaps required due to computer memory limits) and then invoke `reduce` to simplify to a single output.
 
 ### 9.6 Predicate Functionals
 
