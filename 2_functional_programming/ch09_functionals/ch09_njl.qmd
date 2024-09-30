@@ -206,13 +206,48 @@ You could combine `map` and `reduce` to separately compute useful summary values
 
 ### 9.6 Predicate Functionals
 
+A "predicate" is a function that retuns a single `TRUE` or `FALSE` (e.g., `is.null`).
+
 #### 9.6.1 Basics
+
+A predicate functional applies a predicate to each element of a vector. These include `some`, `every`, and `none`. They _can_ be replaced with combinations of normal predicates and `all` or `any` but these `purrr` predicates terminate early as soon as the first condition that would determine the overall decision  is found (e.g., first `F` in `all`) which makes them more computationally efficient than the base equivalents.
 
 #### 9.6.2 Map Variants
 
+`map_if` and `modify_if` are variants of those functions that invoke a predicate function before the function they "actually" want to use.
 
 #### 9.6.3 Exercises
 
+1. Why isn't `is.na` a predicate function? What base R function is closest to being a predicate version of `is.na`?
+
+2. `simple_reduce` (see below) has a problem when `x` is length 0 or length 1. Describe the source of the problem and how you might go about fixing it.
+
+```{r 09-predicate-q2}
+#| eval: false
+
+simple_reduce <- function(x, f) {
+  out <- x[[1]]
+  for (i in seq(2, length(x))) {
+    out <- f(out, x[[i]])
+  }
+  out
+}
+```
+
+3. Implement the `span` function from Haskell: given a list `x` and a predicate function `f`, `span(x, f)` returns the location of the longest sequential run of elements where the predicate is true. (Hint: you might find `rle` helpful.)
+
+4. Implement `arg_max`. It should take a function and a vector of inputs, and return the elements of the input where the function returns the highest value. For example, `arg_max(-10:5, function(x) x ^ 2)` should return -10. `arg_max(-5:5, function(x) x ^ 2)` should return `c(-5, 5)`. Also implement the matching `arg_min` function.
+
+5. The function below scales a vector so it falls in the range [0, 1]. How would you apply it to every column of a data frame? How would you apply it to every numeric column in a data frame?
+
+```{r 09-predicate-q5}
+#| eval: false
+
+scale01 <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+```
 
 ### 9.7 Base Functionals
 
