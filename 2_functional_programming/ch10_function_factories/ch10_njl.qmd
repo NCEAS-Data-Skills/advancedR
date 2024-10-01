@@ -10,16 +10,193 @@ librarian::shelf(purrr)
 
 ### 10.1 Introduction
 
+A **function factory** is a function that makes functions. These are generally not widely used and partition code complexity into (hopefully) digestible chunks rather than actually decreasing complexity.
 
 ### 10.2 Factory Fundamentals
 
+#### 10.2.1 Environments
+
+The execution environment of the function factory becomes the enclosing environment of the created function(s). This allows objects to be defined in the execution environment of the function factory that can then be invoked by the created function(s) without an obvious binding in the global environment.
+
+#### 10.2.2 Diagram Conventions
+
+Reasonably useful diagrams of the concept of function factories in this section. See [here](https://adv-r.hadley.nz/function-factories.html#diagram-conventions).
+
+#### 10.2.3 Forcing Evaluation
+
+Pernicious source of error in that the arguments defined in the function factory are lazily evaluated. This means that if you alter the object used by the function factory--even _after_ defining the function factory--when you invoke the function made by the function factory, the last value assigned to the object expected/used by the function factory is the one that is used.
+
+#### 10.2.4 Stateful Functions
+
+Function factories (when used in combination with the "super assignment operator" `<<-`) support maintenance of state across function invocations (e.g., a function that counts the total number of times it is invoked).
+
+#### 10.2.5 Garbage Collection
+
+Because functions made by function factories retain the execution environment you'll need to explicitly unbind any large temp objects and then use garbage collection to free up that space.
+
+#### 10.2.6 Exercises
+
+1. The definition of `force` is simple (see below). Why is it better to `force(x)` instead of just `x`?
+
+```{r 10-fundament-q1}
+#| eval: false
+
+force
+#> function (x) 
+#> x
+#> <bytecode: 0x7fe8519464b0>
+#> <environment: namespace:base>
+```
+
+
+2. Base R contains two function factories, `approxfun()` and `ecdf()`. Read their documentation and experiment to figure out what the functions do and what they return.
+
+
+3. Create a function `pick` that takes an index, `i`, as an argument and returns a function with an argument `x` that subsets `x` with `i`.
+
+```{r 10-fundament-q3}
+#| eval: false
+
+pick(1)(x)
+# should be equivalent to
+x[[1]]
+
+lapply(mtcars, pick(5))
+# should be equivalent to
+lapply(mtcars, function(x) x[[5]])
+```
+
+4. Create a function that creates functions that compute the i^th^ central moment of a numeric vector. You can test it by running the following code:
+
+```{r 10-fundament-q4}
+#| eval: false
+
+m1 <- moment(1)
+m2 <- moment(2)
+
+x <- runif(100)
+stopifnot(all.equal(m1(x), 0))
+stopifnot(all.equal(m2(x), var(x) * 99 / 100))
+```
+
+5. What happens if you don’t use a closure? Make predictions, then verify with the code below.
+
+```{r 10-fundament-q5}
+#| eval: false
+
+i <- 0
+new_counter2 <- function() {
+  i <<- i + 1
+  i
+}
+```
+
+6. What happens if you use `<-` instead of `<<-`? Make predictions, then verify with the code below.
+
+```{r 10-fundament-q6}
+#| eval: false
+
+new_counter3 <- function() {
+  i <- 0
+  function() {
+    i <- i + 1
+    i
+  }
+}
+```
 
 ### 10.3 Graphical Factories
 
+#### 10.3.1 Labelling
+
+The `scales` package uses function factories to make label text simpler to format based on the axis mapping defined in the top level of the ggplot (or one of its various geometries).
+
+#### 10.3.2 Histogram Bins
+
+Can use a function factory in `geom_histogram` to let different facets of a ggplot have different binwidths (otherwise not possible).
+
+#### 10.3.3 `ggsave`
+
+`ggsave` uses a hidden function in `ggplot2` (`plot_dev`) to export seamlessly--for the user--to different output file types that use different argument names in base R.
+
+#### 10.3.4 Exercises
+
+1. Compare and contrast `ggplot2::label_bquote` with `scales::number_format`
 
 ### 10.4 Statistical Factories
 
+#### 10.4.1 Box-Cox Transformation
 
-### 10.5 Function Factors + Functionals
+Details function factory for exploring different strengths of transformation.
+
+#### 10.4.2 Bootstrap Generators
+
+Function factory for creating a bootstrap generator (i.e., creates a function that when invoked bootstraps the specified variable).
+
+#### 10.4.3 Maximum Likelihood Estimation (MLE)
+
+Example of doing MLE with a function factory. Benefits include being able to do any computation needed by all created functions in the factory itself (thus avoiding re-computing the same operation each time a created function is invoked) and this partitioning is a better reflection of the mathemtical structure of the underlying problem.
+
+#### 10.4.4 Exercises
+
+1. In `boot_model`, why don’t I need to force the evaluation of `df` or `model`?
+
+[Those arguments are evaluated by `lm` inside of the function factory.]{.answer}
+
+2. Why might you formulate the Box-Cox transformation like this?
+
+```{r 10-stats-q2}
+#| eval: false
+
+boxcox3 <- function(x) {
+  function(lambda) {
+    if (lambda == 0) {
+      log(x)
+    } else {
+      (x ^ lambda - 1) / lambda
+    }
+  }  
+}
+```
 
 
+3. Why don't you need to worry that `boot_permute` stores a copy of the data inside the function that it generates?
+
+
+4. How much time does `ll_poisson2` save compared to `ll_poisson1`? Use `bench::mark` to see how much faster the optimisation occurs. How does changing the length of `x` change the results?
+
+### 10.5 Function Factories + Functionals
+
+Functionals and function factories can be combined to turn data into many functions. There's a nice example of making a list containing named elements for various exponents then using `purrr::map` and the custom function factory `power1` (created earlier in this chapter) to generate a function dedicated to using each exponent separately.
+
+#### 10.5.1 Exercises
+
+1. Which of the following commands is equivalent to `with(x, f(z))`?
+
+- A) `x$f(x$z)`
+- B) `f(x$z)`
+- C) `x$f(z)`
+- D) `f(z)`
+- E) It depends
+
+2. Compare and contrast the effects of `env_bind` vs. `attach` for the following code.
+
+```{r 10-factory-functional-q2}
+#| eval: false
+
+funs <- list(
+  mean = function(x) mean(x, na.rm = TRUE),
+  sum = function(x) sum(x, na.rm = TRUE)
+)
+
+attach(funs)
+#> The following objects are masked from package:base:
+#> 
+#>     mean, sum
+mean <- function(x) stop("Hi!")
+detach(funs)
+
+env_bind(globalenv(), !!!funs)
+mean <- function(x) stop("Hi!") 
+env_unbind(globalenv(), names(funs))
+```
