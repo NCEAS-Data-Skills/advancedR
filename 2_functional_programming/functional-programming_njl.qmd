@@ -21,7 +21,6 @@ code-overflow: wrap
 
 {{< include ch10_function_factories/ch10_njl.qmd >}}
 
-
 ## Chapter 11: Function Operators
 
 
