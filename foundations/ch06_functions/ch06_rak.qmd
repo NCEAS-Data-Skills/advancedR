@@ -1,0 +1,547 @@
+---
+title: "Chapter 6: Functions -- Notes & Exercises"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+engine: knitr
+code-overflow: wrap
+editor: source
+---
+
+## Setup
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+```
+
+```{scss custom-themes, echo=FALSE}
+
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+# 6 Functions
+
+From [Chapter 6](https://adv-r.hadley.nz/functions.html#functions) in the second edition of [Advanced R](https://adv-r.hadley.nz/index.html) by Hadley Wickham.
+
+Answers for all exercises can be found in [Chapter 5](https://advanced-r-solutions.rbind.io/functions) in the second edition of [Advanced R Solutions](https://advanced-r-solutions.rbind.io/)
+
+
+## 6.2 Function Fundamentals
+
+### Notes
+
+Functions have three parts: 
+
+- The formals(), the list of arguments that control how you call the function.
+
+- The body(), the code inside the function.
+
+- The environment(), the data structure that determines how the function finds the values associated with the names.
+
+**the function environment is specified *implicitly* based on where the function is defined**
+
+- `do.call()` - function name and list of its arguments 
+
+### 6.2.5 Exercises
+
+1.  Given a name, like `"mean"`, [`match.fun()`](https://rdrr.io/r/base/match.fun.html) lets you find a function. Given a function, can you find its name? Why doesn't that make sense in R?
+
+>[names are bound to objects, not the other way around?]{.answer}
+
+
+2.  It's possible (although typically not useful) to call an anonymous function. Which of the two approaches below is correct? Why?
+
+```{r eval=FALSE}         
+function(x) 3()
+#> function(x) 3()
+(function(x) 3)()
+#> [1] 3
+```
+
+>[the second, because the first looks like it specifies the name is `3` rather than the body]{.answer}
+
+
+3.  A good rule of thumb is that an anonymous function should fit on one line and shouldn't need to use `{}`. Review your code. Where could you have used an anonymous function instead of a named function? Where should you have used a named function instead of an anonymous function?
+
+>[]{.todo}
+
+
+4.  What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
+
+>[`typeof` works for both, though you can also use `is.function` and `is.primitive` for more direct tests.]{.answer}
+
+
+5.  This code makes a list of all functions in the base package.
+
+```{r}         
+objs <- mget(ls("package:base", all = TRUE), inherits = TRUE)
+funs <- Filter(is.function, objs)
+
+funs
+
+str(funs)
+
+```
+
+  Use it to answer the following questions:
+
+   a.  Which base function has the most arguments?
+
+```{r}
+arg_length <- unlist(purrr::map(funs, function(x) length(formals(x))))
+
+arg_length[arg_length == max(arg_length)]
+
+# from the solutions:
+funs %>% 
+  map(formals) %>%
+  map_int(length)
+
+
+```
+
+  >[scan]{.answer}
+
+    b.  How many base functions have no arguments? What's special about those functions?
+
+```{r}
+sum(arg_length==0)
+```
+
+  > [258 and most are primitive functions]{.answer}
+
+    c.  How could you adapt the code to find all primitive functions?
+    
+  >[adjust the `Filter` line so that you use `is.primitive` instead of `is.function`]{.answer}
+
+
+6.  What are the three important components of a function?
+
+>[The arguments, body, and environment]{.answer}
+
+
+7.  When does printing a function not show the environment it was created in?
+
+>[when it was created in the global environment]{.answer}
+
+
+## 6.3 Function Composition
+
+
+## 6.4 Lexical Scoping
+
+### Notes
+
+- **lexical scoping**: R looks up values based on how function is *defined* not how it is called
+
+    - parse-time vs. run-time structure
+
+- R's rules: 
+
+    - name masking: names defined w/in function mask names defined outside of functions
+    
+        - R looks for names first in the function, then in the environment where the function was defined, and so on up to global env. and then other loaded packages 
+    
+    - functions vs. variables: scoping rules apply to functions and variables, except when using a name in a function call R will ignore non-function objects
+    
+    - a fresh start: functions don't know what happened the last time they were called
+    
+    - dynamic scoping: R looks for values when the function is run, not when it is created
+    
+        - the output of a function can change depending on the outside environment
+        
+        - `codetools::findGlobals()` finds external dependencies in a function
+        
+
+### 6.4 Exercises
+
+
+1.    What does the following code return? Why? Describe how each of the three c's is interpreted.
+
+```{r}
+c <- 10
+c(c = c)
+```
+
+>[It returns a named numeric vector (c) with the inital value of `c`; it was created by using the function `c()` which ignores non-function values when called.]{.answer}
+
+
+2.   What are the four principles that govern how R looks for values?
+
+>[masking, lexical scoping, a fresh start, and dynmaic lookup]{.answer}
+
+
+3.  What does the following function return? Make a prediction before running the code yourself.
+
+```{r}
+f <- function(x) {
+  f <- function(x) {
+    f <- function() {
+      x ^ 2
+    }
+    f() + 1
+  }
+  f(x) * 2
+}
+f(10)
+```
+
+
+>[202, you get () * 2 -> (f() + 1) * 2 -> ((x^2) + 1) * 2 -> ((10^2) + 1) * 2 ]{.answer}
+
+
+## 6.5 Lazy Evaluation
+
+### Notes
+
+- arguments are only evaluated if they are accessed
+
+- **promise** (or thunk XD) has three components:
+
+    - expression, environment, and a value
+    
+    - can't manipulate promises with R code
+    
+- evaluation environment is slightly diff. for default vs. user-supplied arguments
+
+    - 
+
+### 6.5 Exercises
+
+1.    What important property of `&&` makes `x_ok()` work?
+
+```{r}
+x_ok <- function(x) {
+  !is.null(x) && length(x) == 1 && x > 0
+}
+
+x_ok(NULL)
+#> [1] FALSE
+x_ok(1)
+#> [1] TRUE
+x_ok(1:3)
+#> [1] FALSE
+```
+
+>[the longer form only goes until the result is determined (until FALSE), so you don't get an error message with a longer vector]{.answer}
+
+
+What is different with this code? Why is this behaviour undesirable here?
+
+```{r}
+x_ok <- function(x) {
+  !is.null(x) & length(x) == 1 & x > 0
+}
+
+x_ok(NULL)
+#> logical(0)
+x_ok(1)
+#> [1] TRUE
+x_ok(1:3)
+#> [1] FALSE FALSE FALSE
+```
+
+>[you removed the doulbe && which means the whole statement is evaluated each time, and produces different length vectors as output]{.answer}
+
+
+2.    What does this function return? Why? Which principle does it illustrate?
+
+```{r}
+f2 <- function(x = z) {
+  z <- 100
+  x
+}
+f2()
+```
+
+>[100; lazy evaluation - arguments are only accessed when needed so you can define variables in terms of other variables]{.answer}
+
+
+3.    What does this function return? Why? Which principle does it illustrate?
+
+```{r}
+y <- 10
+f1 <- function(x = {y <- 1; 2}, y = 0) {
+  c(x, y)
+}
+f1()
+y
+```
+
+>[c(2, 1); scoping and masking? ]{.answer}
+[I don't understand what the part in the brackets is doing]{.question}
+
+
+4.    In `hist()`, the default value of `xlim` is `range(breaks)`, the default value for breaks is `"Sturges"`, and
+```{r}
+range("Sturges")
+#> [1] "Sturges" "Sturges"
+```
+
+Explain how `hist()` works to get a correct `xlim` value.
+
+>[The function uses Sturges formula to calculate the number of bins...]{.answer}
+
+
+5.    Explain why this function works. Why is it confusing?
+
+```{r}
+show_time <- function(x = stop("Error!")) {
+  stop <- function(...) Sys.time()
+  print(x)
+}
+show_time()
+#> [1] "2021-02-21 19:22:36 UTC"
+```
+
+>[Because the arguments are not evaluated until they are called, so it will run first. ]{.answer}
+
+6.    How many arguments are required when calling `library()`?
+
+>[One - actually zero needed to run...]{.answer}
+
+
+
+## 6.6 `...` (dot-dot-dot)
+
+### Notes
+
+- if a function takes another function, use `...` to pass arguments to that function
+
+- to allow methods to take arbitrary extra arguments (if it is an S3 generic)
+
+Downsides:
+
+- need to carefully explain where the arguments go
+
+- misspellings will not produce error messages
+
+### 6.6 Exercises
+
+1.    Explain the following results:
+
+```{r}
+sum(1, 2, 3)
+#> [1] 6
+mean(1, 2, 3)
+#> [1] 1
+
+sum(1, 2, 3, na.omit = TRUE)
+#> [1] 7
+mean(1, 2, 3, na.omit = TRUE)
+#> [1] 1
+```
+
+>[in sum, the `...` is first, so it takes the sum of all arguments, but in mean the `...` is second and it takes the first argument supplied as x and uses that as the mean.]{.answer}
+
+[I think in the second one, the na.omit = TRUE is treated as a 1 (TRUE) but is ignored by mean.]{.answer}
+
+2.    Explain how to find the documentation for the named arguments in the following function call:
+
+```{r}
+plot(1:10, col = "red", pch = 20, xlab = "x", col.lab = "blue")
+```
+
+>[go to the help documentation]{.answer}
+
+
+3.    Why does `plot(1:10, col = "red")` only colour the points, not the axes or labels? Read the source code of `plot.default()` to find out.
+
+>[Because the `...` comes before another `col` argument in the axis function?]{.answer}
+
+
+## 6.7 Exiting a Function
+
+### Notes
+
+- functions can return implicit values (last one eval'd) or explicitly (with return)
+
+- return visible or invisible - invisible if function is used primarily for side effect (like `<-`, `plot()`) and return first arg. invisibly
+
+- use `on.exit()` to set up exit handlers if a function throws an error to clean up global env. 
+
+    - always use `add = TRUE` option or else exit.handler will overwrite previous one
+
+### 6.7.5 Exercises
+
+1.    What does `load()` return? Why don't you normally see these values?
+
+>[`load` returns an object in the parent or specified environment, but it is ".Internal" so you don't see it unless you specify verbose = TRUE.]{.answer}
+
+2.    What does `write.table()` return? What would be more useful?
+
+>[It serves to write a table to the desired file or connection, but returns NULL. It would be helpful to return the object itself for future processing ]{.answer}
+
+[not sure how people found that this function returns NULL]{.question}
+
+3.    How does the chdir parameter of `source()` compare to `with_dir()`? Why might you prefer one to the other?
+
+>[`with_dir` takes a path argument whereas `chdir` is logical, so there is less flexibility to specify the desired working directory location. `chdir` has defaults, though, so you don't need to provide a path.]{.answer}
+
+4.    Write a function that opens a graphics device, runs the supplied code, and closes the graphics device (always, regardless of whether or not the plotting code works).
+
+>[Use `on.exit` to close the graphics device]{.answer}
+
+```{r}
+
+run_graphics <- function(plot_code, dev = "png", ...){
+  on.exit(dev.off(), add = TRUE)
+  png(filename = "tmp_file.png", width = 5, height = 5, units = "in")
+  plot_code
+}
+
+```
+
+
+5.    We can use `on.exit()` to implement a simple version of `capture.output()`.
+
+```{r}
+capture.output2 <- function(code) {
+  temp <- tempfile()
+  on.exit(file.remove(temp), add = TRUE, after = TRUE)
+
+  sink(temp)
+  on.exit(sink(), add = TRUE, after = TRUE)
+
+  force(code)
+  readLines(temp)
+}
+capture.output2(cat("a", "b", "c", sep = "\n"))
+#> [1] "a" "b" "c"
+```
+
+Compare `capture.output()` to `capture.output2()`. How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas so they're easier to understand?
+
+>[the original is much longer and has more options, it is harder to see where the specific exit messages are and capture output calls print instead of just readLines.]{.answer}
+
+## 6.8 Function Forms
+
+
+### Notes
+
+- there are four types of function calls 
+
+    - prefix, infix, replacement, and special
+
+- every function can be written in prefix form
+
+- you can be really evil by rewriting built in infix functions
+
+- arguments are matched by exact name, by prefix, then by position
+
+- create your own infix functions with `%%` - escape special characters when creating but not when calling
+
+### 6.8.6 Exercises
+
+1.    Rewrite the following code snippets into prefix form:
+
+```{r}
+1 + 2 + 3
+
+1 + (2 + 3)
+
+if (length(x) <= 5) x[[5]] else x[[n]]
+```
+
+
+```{r}
+
+`+`(`+`(1,2), 3)
+
+`+`(1, `(`(`+`(2, 3)))
+
+`if`(`<=`(length(x), 5), `[[`(x, 5), `[[`(x, n))
+
+```
+
+
+2.    Clarify the following list of odd function calls:
+
+```{r}
+x <- sample(replace = TRUE, 20, x = c(1:10, NA))
+y <- runif(min = 0, max = 1, 20)
+cor(m = "k", y = y, u = "p", x = x)
+```
+
+>[]{.answer}
+
+3.    Explain why the following code fails:
+
+```{r}
+modify(get("x"), 1) <- 10
+#> Error: target of assignment expands to non-language object
+```
+
+>[]{.answer}
+
+4.    Create a replacement function that modifies a random location in a vector.
+
+
+```{r}
+
+```
+
+>[]{.answer}
+
+5.    Write your own version of `+` that pastes its inputs together if they are character vectors but behaves as usual otherwise. In other words, make this code work:
+
+```{r}
+1 + 2
+#> [1] 3
+
+"a" + "b"
+#> [1] "ab"
+```
+
+>[]{.answer}
+
+6.    Create a list of all the replacement functions found in the base package. Which ones are primitive functions? (Hint: use `apropos()`.)
+
+
+>[]{.answer}
+
+7.    What are valid names for user-created infix functions?
+
+>[]{.answer}
+
+8.    Create an infix xor() operator.
+
+
+```{r}
+
+```
+
+
+9.    Create infix versions of the set functions `intersect()`, `union()`, and `setdiff()`. You might call them `%n%`, `%u%`, and `%/%` to match conventions from mathematics.
+
+
+```{r}
+
+```
+
+
+
+## Key Concepts and terms
+
+- `missing()` seems useful for writing functions to provide defaults if needed but allow users to specify their own
+
+- `on.exit` also seems particularly important to prevent weird things from happening when your function is doing things like writing files to prevent open connections from hanging around
