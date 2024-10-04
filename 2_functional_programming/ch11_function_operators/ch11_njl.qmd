@@ -10,21 +10,87 @@ librarian::shelf(purrr, memoise)
 
 ### 11.1 Introduction
 
+A "function operator" is a function that both accepts a function as an input and returns a function as an output. Below is an example I've adapted to be less ambiguous about arguments / process.
+
+```{r 11-intro}
+
+# Define function operator
+chatty <- function(fxn) {
+  force(fxn)
+  
+  function(x, ...) {
+    res <- fxn(x, ...)
+    cat("Processing ", x, "\n", sep = "")
+    res
+  }
+}
+
+# Define some objects to work on
+square <- function(val) val ^ 2
+nums <- c(3, 2, 1)
+
+# Use a functional on the `square` function directly
+purrr::map_dbl(.x = nums, .f = square)
+
+# Use a functional on the function operator
+purrr::map_dbl(.x = nums, .f = chatty(fxn = square))
+```
+
+Python "decorators" are just another name for function operators.
 
 ### 11.2 Existing Function Operators
 
 #### 11.2.1 Capturing Errors with `purrr::safely`
 
+Advantage of `for` loops over functionals is that when a loop fails you can still use/access all of the values before the failure point. A functional simply fails entirely.
+
+Wrapping the function input to a functional with `purrr::safely` means that all instances of the iteration are captured as a 2-element list (named "result" and "error"). If a given iteration worked, "error" is `NULL`. If it didn't "result" is `NULL`.
+
+By using `purrr::transpose` you can invert a list of lists with the same internal element names into a list where the element names are the primary names of the list. By combining with `purrr::safely` this means you can go from a list of `n` elements each of which is a 2-element list into a list with a "result" element and an "error" element (each of length `n`).
+
+Similar function operators from `purrr` include:
+
+- `possibly`: returns a default value when there's an error. It provides no way to tell if an error occured or not, so it's best reserved for cases when there's some obvious sentinel value (like `NA`)
+- `quietly`: turns output, messages, and warning side-effects into output, message, and warning components of the output
+- `auto_browser`: automatically executes `browser` inside the function when there's an error
 
 #### 11.2.2 Caching Computations with `memoise::memoise`
 
+`memoise` recalls the function it is supplied and its results. When the inputs of the 'memoised' function are the same between runs, the previous (cached) output is returned _dramatically_ faster. However this is risky when the function that is memoised can be affected by something other than its inputs/outputs and thus `memoise` should be used with some caution.
 
 #### 11.2.3 Exercises
 
+1. Base R provides a function operator in the form of `Vectorize`. What does it do? When might you use it?
+
+[This function almost seems like it turns certain functions (with serious caveats--see `?Vectorize`) into functionals (like `purrr::map`). I've included a simple example adapted from the `Vectorize` help file below to demonstrate]{.answer}
+
+```{r 11-fxn-ops_q1}
+vrep <- Vectorize(rep.int)
+vrep(x = 4:1, times = 1:4)
+```
+
+2. Read the source code for `possibly`. How does it work?
+
+[Returns whatever is supplied to the `otherwise` argument if `tryCatch` catches an error.]{.answer}
+
+3. Read the source code for `safely`. How does it work?
+
+[Invokes `testthat::capture_error` under the hood to capture the result/error of each iteration of the function. Note that `capture_condition` is (\*Tsk tsk\*) superseded in the `testthat` package]{.answer}
 
 ### 11.3 Case Study: Creating Your Own Function Operators
 
+The case study described in the book is--IMO--relatively clear on how to make function operators but is not a strong case for this process. It seems much more intuitive to me to simply write a function that does the three things (delays the download request, prints a "." every 10th download, and downloads the file) with an internal for loop to handle a vector of files to download than to use this bizarre 'turn it into a subfunction and use a functional on that' method.
+
+That could be 'if all you have is a hammer...' thinking on my part but still.
 
 #### 11.3.1 Exercises
 
+1. Weigh the pros and cons of `download.file %>% dot_every(10) %>% delay_by(0.1)` versus `download.file %>% delay_by(0.1) %>% dot_every(10)`.
 
+2. Should you memoise `file.download`? Why or why not?
+
+Create a function operator that reports whenever a file is created or deleted in the working directory, using `dir` and `setdiff`. What other global function effects might you want to track?
+
+3. Write a function operator that logs a timestamp and message to a file every time a function is run.
+
+4. Modify `delay_by` so that instead of delaying by a fixed amount of time, it ensures that a certain amount of time has elapsed since the function was last called. That is, if you called `g <- delay_by(1, f); g; Sys.sleep(2); g` there shouldn't be an extra delay.
