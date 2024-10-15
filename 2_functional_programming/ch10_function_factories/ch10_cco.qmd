@@ -1,0 +1,197 @@
+---
+title: "Chapter 10 notes: function factories"
+author: "Casey O'Hara"
+format: 
+  html:
+    embed-resources: true
+execute:
+  message: !expr NA
+editor: source
+---
+
+```{r}
+library(rlang)
+library(ggplot2)
+library(scales)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+# Function factories
+
+## Intro
+
+Function factory is a function that makes functions - takes some inputs and returns a function.
+
+Function factories are an important building block for function operators (chapter 11).
+
+## Factory fundamentals
+
+### Environments
+
+```{r example function factory}
+power1 <- function(exp) {
+  function(x) {
+    x ^ exp
+  }
+}
+
+square <- power1(2)
+cube <- power1(3)
+
+square
+# function(x) {
+#     x ^ exp
+#   }
+# <environment: 0x7fa49978e748>
+```
+
+Examining the resulting function: obvious where `x` comes from, but where does `exp` come from?
+
+> The enclosing environment of the manufactured function is an execution environment of the function factory.
+
+So next examine the enclosing environment of the manufactured function:
+
+```{r}
+env_print(square); env_print(cube)
+
+# <environment: 0x7fa49978e748>
+# Parent: <environment: global>
+# Bindings:
+# • exp: <lazy>
+# <environment: 0x7fa49978dda8>
+# Parent: <environment: global>
+# Bindings:
+# • exp: <lazy>
+```
+
+Both environments have bindings to `exp` - next let's see those values!
+
+```{r}
+fn_env(square)$exp
+fn_env(cube)$exp
+```
+
+The names in the enclosing environments are bound to different values.  So our functions find `x` in the execution environment and `exp` in the enclosing environment.
+
+### Forcing evaluation
+
+But this introduces a small bug caused by lazy evaluation - note:
+```{r}
+x <- 2
+square <- power1(x)
+x <- 3
+
+square(2)
+```
+
+`x` is only evaluated lazily when `square()` is run, not when it is created (by running `power1()`).  The binding of `x` changed between the creation of the function and the calling of the function.  Not a common problem, but would be fucking confusing.  So force evaluation using `force()`:
+
+```{r}
+power2 <- function(exp) {
+  force(exp)
+  function(x) {
+    x ^ exp
+  }
+}
+
+x <- 2
+square <- power2(x)
+x <- 3
+square(2)
+#> [1] 4
+```
+
+### Stateful functions
+
+* The enclosing environment of the manufactured function is unique and constant.
+* We can use the superassignment operator, `<<-`, to change bindings in the enclosing environment.
+
+Example:
+
+```{r}
+new_counter <- function() {
+  i <- 0
+  
+  function() {
+    i <<- i + 1
+    i
+  }
+}
+
+counter_one <- new_counter()
+counter_two <- new_counter()
+
+for(i in 1:3) print(counter_one())
+counter_one()
+counter_two()
+```
+
+Because `counter_one()` and `counter_two()` have separate enclosing environments, the value of `i` in each is independent.
+
+NOTE: If your function starts managing the state of multiple variables, it's best to switch to R6 objects, chapter 14.
+
+### Garbage collection
+
+Regular functions drop their environments after being run, so large temp objects get cleaned up.  But manufactured functions hold on to their execution environments, so temp objects remain in memory (not actually temporary!) - use `rm()` to clean those up when done.
+
+### Exercises
+
+The definition of `force()` is simple:
+
+```{r}
+force
+#> function (x) 
+#> x
+#> <bytecode: 0x7fe8519464b0>
+#> <environment: namespace:base>
+```
+
+Why is it better to force(x) instead of just x?
+
+Base R contains two function factories, `approxfun()` and `ecdf()`. Read their documentation and experiment to figure out what the functions do and what they return.
+
+Create a function `pick()` that takes an index, `i`, as an argument and returns a function with an argument `x` that subsets `x` with `i`.
+
+```{r}
+pick(1)(x)
+# should be equivalent to
+x[[1]]
+
+lapply(mtcars, pick(5))
+# should be equivalent to
+lapply(mtcars, function(x) x[[5]])
+
+```
+
+
+
+Create a function that creates functions that compute the ithcentral moment of a numeric vector. You can test it by running the following code:
+
+m1 <- moment(1)
+m2 <- moment(2)
+
+x <- runif(100)
+stopifnot(all.equal(m1(x), 0))
+stopifnot(all.equal(m2(x), var(x) * 99 / 100))
+What happens if you don’t use a closure? Make predictions, then verify with the code below.
+
+i <- 0
+new_counter2 <- function() {
+  i <<- i + 1
+  i
+}
+What happens if you use <- instead of <<-? Make predictions, then verify with the code below.
+
+new_counter3 <- function() {
+  i <- 0
+  function() {
+    i <- i + 1
+    i
+  }
+}
