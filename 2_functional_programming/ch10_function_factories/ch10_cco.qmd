@@ -142,7 +142,7 @@ Regular functions drop their environments after being run, so large temp objects
 
 ### Exercises
 
-The definition of `force()` is simple:
+1. The definition of `force()` is simple (see below). Why is it better to `force(x)` instead of just `x`?
 
 ```{r}
 force
@@ -152,11 +152,21 @@ force
 #> <environment: namespace:base>
 ```
 
-Why is it better to force(x) instead of just x?
+>[`force(x)` will evaluate x immediately, which avoids lazy eval problems; but `force(x)` communicates that it's intentional, rather than just typing `x`.]{.answer}
 
-Base R contains two function factories, `approxfun()` and `ecdf()`. Read their documentation and experiment to figure out what the functions do and what they return.
+2. Base R contains two function factories, `approxfun()` and `ecdf()`. Read their documentation and experiment to figure out what the functions do and what they return.
 
-Create a function `pick()` that takes an index, `i`, as an argument and returns a function with an argument `x` that subsets `x` with `i`.
+>[]{.answer}
+
+3.  Create a function `pick()` that takes an index, `i`, as an argument and returns a function with an argument `x` that subsets `x` with `i`.
+
+```{r}
+pick <- function(i) {
+  pick_out <- function(x) return(x[[i]])
+  return(pick_out)
+}
+```
+
 
 ```{r}
 pick(1)(x)
@@ -166,28 +176,44 @@ x[[1]]
 lapply(mtcars, pick(5))
 # should be equivalent to
 lapply(mtcars, function(x) x[[5]])
+```
 
+4. Create a function that creates functions that compute the i^th^ central moment of a numeric vector. You can test it by running the following code:
+
+```{r}
+moment <- function(i) {
+  centr_mom_i <- function(x) {
+    return(mean((x - mean(x))^i))
+  }
+}
 ```
 
 
-
-Create a function that creates functions that compute the ithcentral moment of a numeric vector. You can test it by running the following code:
-
+```{r}
 m1 <- moment(1)
 m2 <- moment(2)
 
 x <- runif(100)
 stopifnot(all.equal(m1(x), 0))
 stopifnot(all.equal(m2(x), var(x) * 99 / 100))
-What happens if you don’t use a closure? Make predictions, then verify with the code below.
+```
 
+
+5. What happens if you don’t use a closure? Make predictions, then verify with the code below.
+
+```{r}
 i <- 0
 new_counter2 <- function() {
   i <<- i + 1
   i
 }
-What happens if you use <- instead of <<-? Make predictions, then verify with the code below.
+```
 
+>[Here we are just updating `i` in the global environment which might be risky.]{.answer}
+
+6. What happens if you use `<-` instead of `<<-`? Make predictions, then verify with the code below.
+
+```{r}
 new_counter3 <- function() {
   i <- 0
   function() {
@@ -195,3 +221,9 @@ new_counter3 <- function() {
     i
   }
 }
+
+x <- new_counter3()
+for(i in 1:3) print(x())
+```
+
+>[Here, the manufactured function only updates i within itself, rather than in the enclosing environment, so the counter will continually return 1.]{.answer}
