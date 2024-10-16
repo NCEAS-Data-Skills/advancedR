@@ -1,0 +1,235 @@
+---
+title: "Chapter 11 notes: Function operators"
+author: "Casey O'Hara"
+format: 
+  html:
+    embed-resources: true
+execute:
+  message: !expr NA
+editor: source
+---
+
+```{r}
+library(rlang)
+library(purrr)
+library(memoise)
+```
+
+```{scss custom-themes, echo=FALSE}
+.answer { 
+  color: #560bad;
+  font-weight: bolder;
+}
+```
+
+## Introduction
+
+A function operator is a function that takes one (or more) functions as input and returns a function as output.  Kinda combining functionals (function that takes a function as input and returns a vector output) and function factories (function that takes some non-function input and outputs a function).  Just a function factory that takes a function as an input.
+
+```{r}
+chatty <- function(f) {
+  force(f)
+  
+  function(x, ...) {
+    res <- f(x, ...)
+    cat("Processing ", x, "\n", sep = "")
+    res
+  }
+}
+f <- function(x) x ^ 2
+s <- c(3, 2, 1)
+
+purrr::map_dbl(s, chatty(f))
+#> Processing 3
+#> Processing 2
+#> Processing 1
+#> [1] 9 4 1
+```
+
+## Existing function operators
+
+Two useful function operators to solve recurring problems:
+
+* `purrr::safely()`
+* `memoise::memoise()`
+
+### Capturing errors with `purrr::safely()`
+
+In for-loops when you hit an error you can still access the results up to that failure.  
+
+But not in a functional (`lapply`, `map`, ...).
+
+```{r}
+x <- list(
+  c(0.512, 0.165, 0.717),
+  c(0.064, 0.781, 0.427),
+  c(0.890, 0.785, 0.495),
+  "oops"
+)
+```
+
+```{r, eval = FALSE}
+out <- rep(NA_real_, length(x))
+for (i in seq_along(x)) {
+  out[[i]] <- sum(x[[i]])
+}
+#> Error in sum(x[[i]]): invalid 'type' (character) of argument
+out
+#> [1] 1.39 1.27 2.17   NA
+#> 
+map_dbl(x, sum)
+#> Error in .Primitive("sum")(..., na.rm = na.rm): invalid 'type' (character) of
+#> argument
+```
+`safely()` transforms a function to turn errors into data.  Example:
+
+```{r}
+safe_sum <- safely(sum)
+safe_sum
+#> function (...) 
+#> capture_error(.f(...), otherwise, quiet)
+#> <bytecode: 0x7fafd9e2de58>
+#> <environment: 0x7fafd9e2d9c0>
+```
+`safely()` returns a list with two elements - `result` and `error`.  If the function works, `result` is good and `error` is `NULL`; if the function breaks, `result` is `NULL` and `error` keeps the error info.  Apply that to multiple elements:
+
+```{r}
+out <- map(x, safely(sum))
+# str(out)
+#> List of 4
+#>  $ :List of 2
+#>   ..$ result: num 1.39
+#>   ..$ error : NULL
+#>  $ :List of 2
+#>   ..$ result: num 1.27
+#>   ..$ error : NULL
+#>  $ :List of 2
+#>   ..$ result: num 2.17
+#>   ..$ error : NULL
+#>  $ :List of 2
+#>   ..$ result: NULL
+#>   ..$ error :List of 2
+#>   .. ..$ message: chr "invalid 'type' (character) of argument"
+#>   .. ..$ call   : language .Primitive("sum")(..., na.rm = na.rm)
+#>   .. ..- attr(*, "class")= chr [1:3] "simpleError" "error" "condition"
+
+```
+
+Can use `purrr::transpose` to flip this to a more convenient format instead of lists for each element, each with `return` and `error`, becomes two lists: `return` and `error`
+
+```{r}
+out <- transpose(map(x, safely(sum)))
+# str(out)
+#> List of 2
+#>  $ result:List of 4
+#>   ..$ : num 1.39
+#>   ..$ : num 1.27
+#>   ..$ : num 2.17
+#>   ..$ : NULL
+#>  $ error :List of 4
+#>   ..$ : NULL
+#>   ..$ : NULL
+#>   ..$ : NULL
+#>   ..$ :List of 2
+#>   .. ..$ message: chr "invalid 'type' (character) of argument"
+#>   .. ..$ call   : language .Primitive("sum")(..., na.rm = na.rm)
+#>   .. ..- attr(*, "class")= chr [1:3] "simpleError" "error" "condition"
+```
+
+Three other function operators in `purrr`:
+
+* `possibly()`: returns a default value when there’s an error. It provides no way to tell if an error occured or not, so it’s best reserved for cases when there’s some obvious sentinel value (like NA).
+* `quietly()`: turns output, messages, and warning side-effects into output, message, and warning components of the output.
+* `auto_browser()`: automatically executes browser() inside the function when there’s an error.
+
+
+### Caching computations with `memoise::memoise()`
+
+This "memoises" (or "memoizes") a function, remembering previous inputs and returning cached results.  If certain inputs are repeated, remembers the result from last time and returns it.  Faster, but uses more memory (classic CS tradeoff).
+
+Here's a slow function - each time it's called, it is slow, even with the same imput:
+```{r}
+slow_function <- function(x) {
+  Sys.sleep(1)
+  x * 10 * runif(1)
+}
+system.time(print(slow_function(1)))
+#> [1] 0.808
+#>    user  system elapsed 
+#>   0.000   0.001   1.120
+
+system.time(print(slow_function(1)))
+#> [1] 8.34
+#>    user  system elapsed 
+#>   0.003   0.000   1.019
+```
+
+But with `memoise` it is slow the first time a new input is given, but fast the next time.
+
+```{r}
+fast_function <- memoise::memoise(slow_function)
+system.time(print(fast_function(1)))
+#> [1] 6.01
+#>    user  system elapsed 
+#>   0.001   0.000   1.003
+
+system.time(print(fast_function(1)))
+#> [1] 6.01
+#>    user  system elapsed 
+#>    0.02    0.00    0.02
+```
+
+See the fibonacci example.  Dynamic programming - a complex problem is broken down into many overlapping sub problems - remembering the result of a subproblem improves performance.  
+
+### Exercises
+
+1. Base R provides a function operator in the form of `Vectorize()`. What does it do? When might you use it?
+
+```{r}
+# We use rep.int as rep is primitive - rep.int(x, times)
+vrep <- Vectorize(rep.int)
+vrep(1:4, 4:1)
+vrep(times = 1:4, x = 4:1)
+rep.int(1:4, 4:1)
+
+vrep <- Vectorize(rep.int, vectorize.args = "times")
+vrep(times = 1:4, x = 42)
+```
+
+>["vectorizes" the action of its argument FUN.  So it applies the FUN to each element of the argument(s), iterating over each in turn, instead of across the entire argument?  The answer key says, probably don't use it...]{.answer}
+
+2. Read the source code for `possibly()`. How does it work?
+
+```{r, eval = FALSE}
+function (.f, otherwise = NULL, quiet = TRUE) 
+{
+    .f <- as_mapper(.f)
+    force(otherwise)
+    check_bool(quiet)
+    function(...) {
+        tryCatch(.f(...), error = function(e) {
+            if (!quiet) 
+                message("Error: ", conditionMessage(e))
+            otherwise
+        })
+    }
+}
+```
+
+
+>[Tries the function, if error, capture the error and return a default value `otherwise`, or if successful report the response]{.answer}
+
+3. Read the source code for `safely()`. How does it work?
+
+```{r, eval = FALSE}
+function (.f, otherwise = NULL, quiet = TRUE) 
+{
+    .f <- as_mapper(.f)
+    force(otherwise)
+    check_bool(quiet)
+    function(...) capture_error(.f(...), otherwise, quiet)
+}
+```
+
+>[Similar to `possibly()`?  Tries the function, if error: capture the error and return a result value `otherwise`, returned as a list; or if successful report the response and report NULL as the error (in a list).]{.answer}
+
