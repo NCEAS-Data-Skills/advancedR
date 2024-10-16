@@ -1,0 +1,57 @@
+
+```{r 22-libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr, memoise)
+```
+
+### 22.1 Introduction
+
+
+
+## 22.2 Overall Approach
+
+
+
+## 22.3 Locating Errors
+
+### 22.3.1 Lazy Evaluation
+
+
+
+## 22.4 Interactive Debugger
+
+### 22.4.1 `browser` commands
+
+
+
+### 22.4.2 Alternatives
+
+
+
+### 22.4.3 Compiled Code
+
+
+
+## 22.5 Non-Interactive Debugging
+
+### 22.5.1 `dump.frames`
+
+
+
+### 22.5.2 Print Debugging
+
+
+
+### 22.5.3 RMarkdown
+
+
+
+## 22.6 Non-Error Failures
+
+
+
+
