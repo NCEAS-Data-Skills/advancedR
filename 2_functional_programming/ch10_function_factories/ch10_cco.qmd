@@ -227,3 +227,5 @@ for(i in 1:3) print(x())
 ```
 
 >[Here, the manufactured function only updates i within itself, rather than in the enclosing environment, so the counter will continually return 1.]{.answer}
+
+
