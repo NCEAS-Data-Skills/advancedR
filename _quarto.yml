@@ -6,6 +6,7 @@ project:
     - index.qmd
     - 1_foundations/foundations_njl.qmd
     - 2_functional_programming/functional-programming_njl.qmd
+    - 5_techniques/techniques_njl.qmd
     - _products
 
 execute:
@@ -15,17 +16,28 @@ website:
   title: "NCEAS Data Skills Group - Advanced R"
   repo-url: https://github.com/NCEAS-Data-Skills/advancedR
   repo-actions: [issue]
+  sidebar: 
+    title: "Notes"
+    style: "docked"
+    background: light
+    border: true
+    alignment: left
+    collapse-level: 2
+    contents:
+    - section: "Foundations"
+      contents: 
+        - text: "Lyon Notes"
+          href: 1_foundations/foundations_njl.qmd
+    - section: "Functional Programming"
+      contents: 
+        - text: "Lyon Notes"
+          href: 2_functional_programming/functional-programming_njl.qmd
+    - section: "Techniques"
+      contents: 
+        - text: "Lyon Notes"
+          href: 5_techniques/techniques_njl.qmd
   navbar:
     background: primary
-    left:
-      - text: "Foundations"
-        menu: 
-          - text: "Lyon Notes"
-            href: 1_foundations/foundations_njl.qmd
-      - text: "Functional Programming"
-        menu: 
-          - text: "Lyon Notes"
-            href: 2_functional_programming/functional-programming_njl.qmd
     right:
       - text: "Highlights"
         menu: 

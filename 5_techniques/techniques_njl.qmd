@@ -1,0 +1,18 @@
+---
+title: "Techniques Chapters -- Notes & Exercises"
+author: "Nick J Lyon"
+format: html
+engine: knitr
+code-overflow: wrap
+---
+
+```{scss custom_themes, echo=FALSE}
+.answer { 
+  color: #b5179e;
+  font-weight: bolder;
+}
+```
+
+## Chapter 22: Debugging
+
+{{< include ch22_debugging/ch22_njl.qmd >}}
