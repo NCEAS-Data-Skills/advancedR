@@ -6,6 +6,7 @@ project:
     - index.qmd
     - 1_foundations/foundations_njl.qmd
     - 2_functional_programming/functional-programming_njl.qmd
+    - 5_techniques/techniques_njl.qmd
     - _products
 
 execute:
@@ -26,6 +27,10 @@ website:
         menu: 
           - text: "Lyon Notes"
             href: 2_functional_programming/functional-programming_njl.qmd
+      - text: "Techniques"
+        menu: 
+          - text: "Lyon Notes"
+            href: 5_techniques/techniques_njl.qmd
     right:
       - text: "Highlights"
         menu: 
