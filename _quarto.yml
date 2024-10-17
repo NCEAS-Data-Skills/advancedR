@@ -17,7 +17,6 @@ website:
   repo-url: https://github.com/NCEAS-Data-Skills/advancedR
   repo-actions: [issue]
   sidebar: 
-    title: "Notes"
     style: "docked"
     background: light
     border: true
