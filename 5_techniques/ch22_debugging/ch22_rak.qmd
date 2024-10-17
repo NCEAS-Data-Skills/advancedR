@@ -1,0 +1,82 @@
+---
+title: "Chapter 22"
+author: "Rachel King"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+engine: knitr
+code-overflow: wrap
+editor: source
+---
+
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+librarian::shelf(rlang)
+librarian::shelf(memoise)
+library(rlang)
+library(ggplot2)
+library(scales)
+```
+
+
+
+```{scss custom-themes, echo=FALSE}
+
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+
+## Overall approach
+
+### Notes
+
+Steps: 
+
+1. Google
+
+- you can search directly from R with the `searcher` package
+
+2. Make it repeatable
+
+3. Figure out where it is
+
+4. Fix it and test it
+
+## common issues to check
+
+- is the global environment different? have you loaded different packages? are objects left from previous sessions causing differences 
+- is the working directory different?
+
+- is the PATH environment variable, which determines where external commands are found, different?
+
+- is the R_LIBS env varible, different?
+
+`dump.frames()` can be used to debug interactively code that didn't work initially in the interactive debugger
+
+**print debugging**
+
+insert a bunch of print statements to debug the code
+
+rmarkdown::render("path/to/file.Rmd") runs code in current session to help debug code in RMarkdown
+
+- code that causes R to crash may indicate bug in compiled (C or C++) code
