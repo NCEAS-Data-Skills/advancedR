@@ -1,0 +1,94 @@
+---
+title: "Chapter 11. Function Operators"
+author: "Rachel King"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+engine: knitr
+code-overflow: wrap
+editor: source
+---
+
+
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+librarian::shelf(rlang)
+librarian::shelf(memoise)
+library(rlang)
+library(ggplot2)
+library(scales)
+```
+
+
+
+```{scss custom-themes, echo=FALSE}
+
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+## 11.1 Intro
+
+- nothing you can't do without them - but can allow you to factor out complexity and make code more readable and reusable
+
+    - I'll believe it when I see it
+    
+- rarely a reason to use function operators with a for loop, mainly used with functionals
+
+## 11.2 Existing Function Operators
+
+### Notes
+
+- `safely()` can help you catch errors within functionals
+
+- additional functionals include `possibly`, `quietly`, and `auto_browser`
+
+- **dynamic programming** - complex problem broken down into many overlapping subproblems, remembering result of subproblem improves performance (`memoise`)
+
+### Exercises
+
+1. Vectorize will take a function and vectorize the action of its argument (FUN) - it wraps a call to mapply; seems like an easy way to run a function multiple times with different input
+
+2. It uses tryCatch to find errors
+
+3. `safely` uses the `capture_error` function to find and document any errors
+
+## 11.3 
+
+- function operators seem useful when you want to add some functionality to a particular function without having to add another line of code each time (e.g. you know you want to log each call to a particular function in a file, you can create a wrapper around that function to do so)
+
+### Exercises: 
+
+1. including delay_by before dot_every may make it take longer?
+
+- ok it actually just changes when the delay occurs, ie. beofre or after the first dot
+
+2. yes, it could keep you from re-downloading files that already exist if the files are immutable - otherwise there is no point; but if the files are large they will take up a lot of memory
+
+3. 
+
+```{r}
+
+file_mod <- function()
+
+```
+
