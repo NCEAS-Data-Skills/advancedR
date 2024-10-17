@@ -1,0 +1,108 @@
+---
+title: "Chapter 9 - Functionals"
+format: 
+  html:
+    toc: true
+    embed-resources: true
+engine: knitr
+code-overflow: wrap
+editor: source
+---
+
+
+```{r libs}
+#| echo: false
+#| message: false
+
+# Install/load needed libraries
+## install.packages("librarian")
+librarian::shelf(purrr)
+librarian::shelf(rlang)
+
+```
+
+
+
+```{scss custom-themes, echo=FALSE}
+
+.answer { 
+  color: #475286FF;
+  font-weight: bolder;
+}
+
+.question {
+  color: #4C9AC4FF;
+  font-style: italic;
+}
+
+.todo {
+  color: #B53737FF;
+  font-weight: bolder;
+}
+```
+
+
+## 9.2
+
+### Notes
+
+- `map` and `lapply` do basically the same thing, but `map` has additional helpers
+
+    - but if you only need `map` skip and use `lapply` to avoid other dependencies
+
+- `~` is "twiddle" XD
+
+- **`map` has features to allow you to use pluck to select items by name, position, or both (for lists) - seems helpful for lists of model output**
+
+https://d33wubrfki0l68.cloudfront.net/e1b3536a7556aef348f546a79277125c419a5fdc/0c0a1/diagrams/functionals/map-arg.png
+
+- using anonymous function vs. `...=` to pass additional arguments differ b/c the
+anonymous function calls the argument each time vs only once with the `...=`
+
+    - [why does this matter?]{.question}
+    
+- `map` uses `.x` and `.f` to avoid clashing with functions that have those arguments
+
+    - this seems important if you are writing your own functionals
+    
+- it is possible to iterate over other elements besides the first element of a function, but usually takes an anonymous function to do it
+
+### Exercises
+
+
+4. 
+```{r}
+trials <- map(1:100, ~ t.test(rpois(10, 10), rpois(7, 10)))
+str(trials)
+
+map(trials, "p.value")
+```
+
+## 9.4
+
+### notes
+
+- `modify` seems like a useful function too...
+
+### exercises
+
+# Useful Functions and Concepts
+
+## Functions
+
+:::{.function}
+**`modify`**
+
+like `map` but returns the same output type as input (e.g. dataframe --> dataframe)
+:::
+
+:::{.function}
+`**walk**`
+
+when you want to use a map-like function but don't care about the output, e.g. writing files to disk
+:::
+
+:::{.concept}
+most functionals use wrappers around a for loop
+
+:::
