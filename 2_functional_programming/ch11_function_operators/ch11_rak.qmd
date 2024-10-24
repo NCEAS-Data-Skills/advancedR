@@ -64,6 +64,8 @@ library(scales)
 
 - **dynamic programming** - complex problem broken down into many overlapping subproblems, remembering result of subproblem improves performance (`memoise`)
 
+- `chatty` function could be very useful for debugging
+
 ### Exercises
 
 1. Vectorize will take a function and vectorize the action of its argument (FUN) - it wraps a call to mapply; seems like an easy way to run a function multiple times with different input

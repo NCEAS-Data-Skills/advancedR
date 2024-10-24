@@ -69,7 +69,7 @@ Steps:
 
 - is the PATH environment variable, which determines where external commands are found, different?
 
-- is the R_LIBS env varible, different?
+- is the R_LIBS env varaible, different?
 
 `dump.frames()` can be used to debug interactively code that didn't work initially in the interactive debugger
 
@@ -80,3 +80,5 @@ insert a bunch of print statements to debug the code
 rmarkdown::render("path/to/file.Rmd") runs code in current session to help debug code in RMarkdown
 
 - code that causes R to crash may indicate bug in compiled (C or C++) code
+
+
